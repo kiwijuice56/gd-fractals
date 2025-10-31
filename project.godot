@@ -14,3 +14,7 @@ config/name="fractal-fish"
 run/main_scene="uid://bmmi6fbli5q4t"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[rendering]
+
+shader_compiler/shader_cache/enabled=false
