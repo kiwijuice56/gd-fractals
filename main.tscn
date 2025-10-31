@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmmi6fbli5q4t"]
+
+[ext_resource type="PackedScene" uid="uid://cocpy0366csk5" path="res://rendering/rendering_plane.tscn" id="1_ig7tw"]
+
+[node name="Main" type="Node"]
+
+[node name="RenderingPlane" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("1_ig7tw")]
+camera = NodePath("../MirrorCamera")
+
+[node name="MirrorCamera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09645963, 0, 2.6122198)

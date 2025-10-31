@@ -1,0 +1,38 @@
+[gd_scene load_steps=5 format=3 uid="uid://cocpy0366csk5"]
+
+[ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_mnrjc"]
+[ext_resource type="Script" uid="uid://cqommosxphppa" path="res://rendering/rendering_plane.gd" id="2_wqimk"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wqimk"]
+render_priority = 0
+shader = ExtResource("1_mnrjc")
+shader_parameter/max_iter = 64
+shader_parameter/max_bounce = 1
+shader_parameter/collision_threshold = 0.001
+shader_parameter/normal_sample_length = 0.01
+shader_parameter/bulb_runaway_threshold = 2.0
+shader_parameter/glow_distance = 0.03
+shader_parameter/color_center_point = Vector3(0, 0.5, -0.5)
+shader_parameter/color_intensity = 0.5
+shader_parameter/runaway_threshold = 90.0
+shader_parameter/light_ray = Vector3(0, -1, 0)
+shader_parameter/specular_color = Color(1, 1, 1, 1)
+shader_parameter/specular_ratio = 1.0
+shader_parameter/clear_color = Color(0, 0, 0, 0)
+shader_parameter/_fov = 75.0
+shader_parameter/_cam_mat = Basis(1, 0, 0, 0, 1, 0, 0, 0, 1)
+shader_parameter/_aspect_ratio = 1.6551724137931034
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
+size = Vector2(4, 4)
+orientation = 2
+
+[node name="RenderingPlane" type="MeshInstance3D"]
+material_override = SubResource("ShaderMaterial_wqimk")
+instance_shader_parameters/_frac_pos = Vector3(0, 0, 0)
+instance_shader_parameters/fractal_color1 = Color(1, 1, 1, 1)
+instance_shader_parameters/fractal_color2 = Color(1, 1, 1, 1)
+instance_shader_parameters/glow_color = Color(0.25, 0.1725, 0.1725, 0.14509805)
+instance_shader_parameters/rotation = Vector3(0, 0, 0)
+mesh = SubResource("PlaneMesh_n23bp")
+script = ExtResource("2_wqimk")

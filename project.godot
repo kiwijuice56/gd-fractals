@@ -11,5 +11,6 @@ config_version=5
 [application]
 
 config/name="fractal-fish"
+run/main_scene="uid://bmmi6fbli5q4t"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
