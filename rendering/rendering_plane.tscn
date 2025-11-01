@@ -21,7 +21,7 @@ shader_parameter/glow_color = Color(1, 1, 1, 0.01)
 shader_parameter/glow_distance = 0.5
 shader_parameter/clear_color = Color(0, 0, 0, 0)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(0.97685134, 0.055899568, -0.20648673, 0, 0.9652546, 0.2613113, 0.21391946, -0.2552623, 0.9429102)
+shader_parameter/_cam_mat = Basis(0.89801115, 0.14612655, -0.4149977, 0, 0.9432349, 0.33212638, 0.4399728, -0.29825315, 0.84703547)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(8, 8)
