@@ -11,5 +11,5 @@ instance_shader_parameters/_rotation = Vector3(0, 0.5235988, 0)
 camera = NodePath("../MirrorCamera")
 
 [node name="MirrorCamera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09645963, 0, 2.6122198)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.620255, 0.51286554, 2.2008636)
 script = ExtResource("2_0xm2m")

@@ -102,26 +102,26 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	p -= _position;
 	p = rotate_xyz(p, _rotation);
 	p /= _scale;
-	
+
 	vec3 z = p;
 	float dr = 1.0;
 	float r = 0.0;
-	
+
 	for (int i = 0; i < bulb_iter; i++) {
 		r = length(z);
 		if (r > bulb_runaway_threshold)
 			break;
-		
+
 		// Convert to polar coordinates
 		float theta = acos(z.z/r);
 		float phi = atan(z.y, z.x);
 		dr = pow(r, bulb_power - 1.0) * bulb_power * dr;
-		
+
 		// Scale and rotate the point
 		float zr = pow(r, bulb_power);
 		theta = theta * bulb_power;
 		phi = phi * bulb_power;
-		
+
 		// Convert back to cartesian coordinates
 		z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
 		z += p;
@@ -149,7 +149,10 @@ float smooth_intersection(float d1, float d2, float k) {
 float mesh_DE(vec3 p, inout vec3 collision_info) {
 	vec3 uvw = mod(p, 3.0) + vec3(-1.0, 0.0, -2.0);
 	float d = texture(sdf_texture, uvw).r * 2.0 - 1.0;
-	float d2 = texture(sdf_texture, uvw + vec3(0.0, 0.0, 0.5)).r * 2.0 - 1.0;
+	float d2 = texture(sdf_texture, uvw + vec3(0.0, 0.5 * sin(TIME) - 0.5, 0.5)).r * 2.0 - 1.0;
+
+	collision_info.r = d < d2 ? 0.0 : 1.0;
+
 	return smooth_intersection(d, d2, 0.1);
 }
 
@@ -207,8 +210,8 @@ vec3 get_normal(vec3 ray_pos) {
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays.html
 void fragment() {
 	// Initialize materials
-	Material fractal_material = Material(0.07, 0.5, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
-	Material mesh_material = Material(0.07, 0.5, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
+	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
+	Material mesh_material = Material(0.55, 0.2, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
 
 	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
@@ -221,18 +224,17 @@ void fragment() {
 
 	// March through scene, bouncing at collisions to create reflections
 	vec4 pixel_color = clear_color;
+	float previous_reflectance = 1.0;
 	for (int i = 0; i < max_bounce; i++) {
 		int collider_id;
 		vec3 collision_info = vec3(1.0, 1024.0, 0.0);
 		int iter = march(ray_pos, ray_dir, collider_id, collision_info);
-
 		// If we iterated up to the maximum amount of times and still haven't collided,
-		// we probably escaped any objects; Apply some glow based on the closest distance we reached
+		// we probably escaped any objects
 		if (iter == max_iter) {
-			pixel_color = clear_color;
+			pixel_color += clear_color * previous_reflectance;
 			break;
 		}
-
 		Material surface_material;
 		float x = collision_info.r;
 		x -= floor(x);
@@ -241,33 +243,26 @@ void fragment() {
 		} else if (collider_id == 1) {
 			surface_material = mesh_material;
 		}
-
 		vec3 normal = get_normal(ray_pos);
-
 		// Reflect the ray
 		ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
 		ray_pos += ray_dir * collision_threshold * 4.0;
-
-		vec4 hit_color = surface_material.albedo_color;
-
+		vec4 hit_color = collision_info.r > 0.5 ? vec4(0.4, 0.4, 0.4, 1.0) : vec4(0.0, 0.4, 1.0, 1.0); // surface_material.albedo_color;
 		// Ambient occlusion
 		float aa = float(iter) / float(max_iter);
 		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
-
 		// Shadows based on the normal vector at this surface
 		float normal_shadow = (0.25 + 0.75 * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_ray))), 1.0/2.4));
 		hit_color *= vec4(pow(normal_shadow, 1.2), pow(normal_shadow, 1.1), normal_shadow, 1.0);
-
 		// Specular highlights
 		float specular = dot(-normalize(light_ray), ray_dir);
 		float specular_power = pow(25.0 * (surface_material.roughness - 1.0), 2.0) + 2.0;
 		hit_color += specular_ratio * vec4(specular_color.rgb, 1.0) * vec4(surface_material.specular_alpha) * pow(specular, specular_power);
-		pixel_color = hit_color;
-
 		// Mix reflections
-		pixel_color = mix(pixel_color, hit_color, surface_material.reflectivity);
+		pixel_color += hit_color * previous_reflectance;
+		previous_reflectance = surface_material.reflectivity;
 	}
 
-	ALBEDO.rgb = pixel_color.rgb;
+	ALBEDO.rgb = clamp(pixel_color.rgb, vec3(0.0), vec3(1.0));
 	ALPHA = clamp(pixel_color.a, 0.0, 1.0);
 }
