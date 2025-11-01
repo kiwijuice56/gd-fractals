@@ -13,10 +13,6 @@ group_uniforms fractal;
 instance uniform int bulb_iter = 8; // Max iterations of the fractal algorithm
 instance uniform float bulb_power = 8.0; // Dimension of the fractal
 uniform float bulb_runaway_threshold = 2.0;
-instance uniform vec4 fractal_color1: source_color;
-instance uniform vec4 fractal_color2: source_color;
-instance uniform vec4 glow_color: source_color;
-uniform float glow_distance = 1.0;
 uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5);
 uniform float color_intensity = 0.5;
 
@@ -27,6 +23,8 @@ group_uniforms light;
 uniform vec3 light_ray = vec3(0.0, -1.0, 0.0);
 uniform vec3 specular_color: source_color = vec3(1.0, 1.0, 1.0);
 uniform float specular_ratio = 1.0;
+uniform vec4 glow_color: source_color = vec4(1.0, 1.0, 1.0, 0.01);
+uniform float glow_distance = 0.5;
 
 group_uniforms scene;
 uniform vec4 clear_color: source_color;
@@ -136,17 +134,31 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	return (0.5 * log(r) * r/dr) * _scale;
 }
 
+float mesh_DE(vec3 p, inout vec3 collision_info) {
+	return 1000.0;
+}
+
 // Returns a vec4 of the color and distance to the closest object as rgba respectively
 // `collision_info` holds extra information about the collision; Only stores
 // distance values for coloring at this point
 float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
-	float d1 = mandelbulb_DE(p, collision_info);
-	collider_id = 0; // Fractal
-	return d1;
+	vec3 bulb_info = vec3(1.0, 1024.0, 0.0);
+	float d1 = mandelbulb_DE(p, bulb_info);
+	vec3 mesh_info = vec3(1.0, 1024.0, 0.0);
+	float d2 = mesh_DE(p, mesh_info);
+	if (d2 < d1) {
+		collision_info = mesh_info;
+		collider_id = 1;
+		return d2;
+	} else {
+		collision_info = bulb_info;
+		collider_id = 0; 
+		return d1;
+	}
 }
 
 int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_info) {
-	float dist = 10000.0;
+	float dist = 10000.0; // Arbitrary max distance
 	int iter = 0;
 	for (int i = 0; i < max_iter; i++) {
 		dist = abs(world_DE(ray_pos, id, collision_info));
@@ -158,7 +170,7 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 			break;
 		}
 		// Once we are close enough to the fractal, we say we collided with it
-		if (dist < collision_threshold )
+		if (dist < collision_threshold)
 			break;
 		iter++;
 	}
@@ -169,15 +181,19 @@ vec3 get_normal(vec3 ray_pos) {
 	int _id;
 	vec3 _col_info;
 	return normalize(
-		vec3(world_DE(ray_pos + vec3(normal_sample_length, 0.0, 0.0), _id, _col_info) - world_DE(ray_pos - vec3(normal_sample_length, 0.0, 0.0), _id, _col_info),
-			 world_DE(ray_pos + vec3(0.0, normal_sample_length, 0.0), _id, _col_info) - world_DE(ray_pos - vec3(0.0, normal_sample_length, 0.0), _id, _col_info),
-			 world_DE(ray_pos + vec3(0.0, 0.0, normal_sample_length), _id, _col_info) - world_DE(ray_pos - vec3(0.0, 0.0, normal_sample_length), _id, _col_info)));
+		vec3(
+			world_DE(ray_pos + vec3(normal_sample_length, 0.0, 0.0), _id, _col_info) - world_DE(ray_pos - vec3(normal_sample_length, 0.0, 0.0), _id, _col_info),
+			world_DE(ray_pos + vec3(0.0, normal_sample_length, 0.0), _id, _col_info) - world_DE(ray_pos - vec3(0.0, normal_sample_length, 0.0), _id, _col_info),
+			world_DE(ray_pos + vec3(0.0, 0.0, normal_sample_length), _id, _col_info) - world_DE(ray_pos - vec3(0.0, 0.0, normal_sample_length), _id, _col_info)
+			)
+		);
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays.html
 void fragment() {
 	// Initialize materials
-	Material fractal = Material(0.07, 0.5, 5.0, 0.95, vec4(0.0));
+	Material fractal_material = Material(0.07, 0.5, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
+	Material mesh_material = Material(0.07, 0.5, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
 	
 	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
@@ -205,8 +221,11 @@ void fragment() {
 		Material surface_material;
 		float x = collision_info.r;
 		x -= floor(x);
-		fractal.albedo_color = fractal_color1 * x + (1.0 - x) * fractal_color2;
-		surface_material = fractal;
+		if (collider_id == 0) {
+			surface_material = fractal_material;
+		} else if (collider_id == 1) {
+			surface_material = mesh_material;
+		}
 		
 		vec3 normal = get_normal(ray_pos);
 		
@@ -233,7 +252,7 @@ void fragment() {
 		// Mix reflections
 		pixel_color = mix(pixel_color, hit_color, surface_material.reflectivity);
 	}
-
+	
 	ALBEDO.rgb = pixel_color.rgb;
 	ALPHA = clamp(pixel_color.a, 0.0, 1.0);
 }
