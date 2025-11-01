@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://dnlhuq8sahcvc"]
 
 [ext_resource type="Shader" uid="uid://cpu28le3rq44q" path="res://sdf_textures/sdf_preview/sdf_preview.gdshader" id="1_kxygv"]
-[ext_resource type="ImageTexture3D" uid="uid://03pqkp0f5lu6" path="res://sdf_textures/teto.res" id="2_suckt"]
+[ext_resource type="ImageTexture3D" uid="uid://boskyh1aw6dsg" path="res://sdf_textures/bunny.res" id="2_suckt"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_rf1i4"]
 shader = ExtResource("1_kxygv")

@@ -139,13 +139,13 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 }
 
 float mesh_DE(vec3 p, inout vec3 collision_info) {
-	vec3 uvw = p / 2.0;
+	vec3 uvw = clamp(p / 2.0, vec3(0.0), vec3(1.0));
 	
 	float raw_disance = texture(sdf_texture, uvw).r;
 	float rescaled_distance = raw_disance * 2.0 - 1.0;
 	
 	// SDF is "exact", so we should scale it down slightly to prevent clipping 
-	return clamp(rescaled_distance, 0.0, 1.0) * 0.2;
+	return clamp(rescaled_distance, -1.0, 1.0) * 0.2;
 }
 
 // Returns a vec4 of the color and distance to the closest object as rgba respectively

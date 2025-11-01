@@ -1,7 +1,7 @@
 class_name SDFLoader extends Object
 # Loads signed distance field (SDF) files and converts them to 3D textures
 
-static func load_sdf_texture(path: String, texture_size: int = 66) -> ImageTexture3D:
+static func load_sdf_texture(path: String, texture_size: int = 64) -> ImageTexture3D:
 	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
 	 
 	var data: PackedByteArray = file.get_buffer(texture_size * texture_size * texture_size)
