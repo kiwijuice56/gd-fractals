@@ -1,14 +1,15 @@
-[gd_scene load_steps=2 format=3 uid="uid://bmmi6fbli5q4t"]
+[gd_scene load_steps=3 format=3 uid="uid://bmmi6fbli5q4t"]
 
 [ext_resource type="PackedScene" uid="uid://cocpy0366csk5" path="res://rendering/rendering_plane.tscn" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://bussg4w100dht" path="res://scene_camera.gd" id="2_0xm2m"]
 
 [node name="Main" type="Node"]
 
 [node name="RenderingPlane" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("1_ig7tw")]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0, 0)
-instance_shader_parameters/_position = Vector3(0, 0, 0)
 instance_shader_parameters/_rotation = Vector3(0, 0.5235988, 0)
 camera = NodePath("../MirrorCamera")
 
 [node name="MirrorCamera" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09645963, 0, 2.6122198)
+script = ExtResource("2_0xm2m")

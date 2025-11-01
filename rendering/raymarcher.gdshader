@@ -26,8 +26,6 @@ group_uniforms light;
 uniform vec3 light_ray = vec3(0.0, -1.0, 0.0);
 uniform vec3 specular_color: source_color = vec3(1.0, 1.0, 1.0);
 uniform float specular_ratio = 1.0;
-uniform vec4 glow_color: source_color = vec4(1.0, 1.0, 1.0, 0.01);
-uniform float glow_distance = 0.5;
 
 group_uniforms scene;
 uniform vec4 clear_color: source_color;
@@ -104,26 +102,26 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	p -= _position;
 	p = rotate_xyz(p, _rotation);
 	p /= _scale;
-
+	
 	vec3 z = p;
 	float dr = 1.0;
 	float r = 0.0;
-
+	
 	for (int i = 0; i < bulb_iter; i++) {
 		r = length(z);
 		if (r > bulb_runaway_threshold)
 			break;
-
+		
 		// Convert to polar coordinates
 		float theta = acos(z.z/r);
 		float phi = atan(z.y, z.x);
 		dr = pow(r, bulb_power - 1.0) * bulb_power * dr;
-
+		
 		// Scale and rotate the point
 		float zr = pow(r, bulb_power);
 		theta = theta * bulb_power;
 		phi = phi * bulb_power;
-
+		
 		// Convert back to cartesian coordinates
 		z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
 		z += p;
@@ -137,10 +135,22 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	return (0.5 * log(r) * r/dr) * _scale;
 }
 
+// https://iquilezles.org/articles/
+float smooth_union(float d1, float d2, float k) {
+	k *= 4.0;
+	float h = max(k-abs(d1-d2),0.0);
+	return min(d1, d2) - h*h*0.25/k;
+}
+
+float smooth_intersection(float d1, float d2, float k) {
+	return -smooth_union(-d1,-d2,k);
+}
+
 float mesh_DE(vec3 p, inout vec3 collision_info) {
-	vec3 uvw = p;
+	vec3 uvw = mod(p, 3.0) + vec3(-1.0, 0.0, -2.0);
 	float d = texture(sdf_texture, uvw).r * 2.0 - 1.0;
-	return d;
+	float d2 = texture(sdf_texture, uvw + vec3(0.0, 0.0, 0.5)).r * 2.0 - 1.0;
+	return smooth_intersection(d, d2, 0.1);
 }
 
 // Returns a vec4 of the color and distance to the closest object as rgba respectively
@@ -219,7 +229,7 @@ void fragment() {
 		// If we iterated up to the maximum amount of times and still haven't collided,
 		// we probably escaped any objects; Apply some glow based on the closest distance we reached
 		if (iter == max_iter) {
-			pixel_color = mix(glow_color, clear_color, clamp(pow(collision_info.g, 2) / glow_distance, 0.0, 1.0));
+			pixel_color = clear_color;
 			break;
 		}
 

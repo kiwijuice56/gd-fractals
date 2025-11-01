@@ -7,10 +7,10 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wqimk"]
 render_priority = 0
 shader = ExtResource("1_mnrjc")
-shader_parameter/max_iter = 128
+shader_parameter/max_iter = 256
 shader_parameter/max_bounce = 1
 shader_parameter/collision_threshold = 0.001
-shader_parameter/normal_sample_length = 0.01
+shader_parameter/normal_sample_length = 0.0232
 shader_parameter/bulb_runaway_threshold = 2.0
 shader_parameter/color_center_point = Vector3(0, 0.5, -0.5)
 shader_parameter/color_intensity = 0.5
@@ -19,11 +19,9 @@ shader_parameter/runaway_threshold = 8.0
 shader_parameter/light_ray = Vector3(0, 1, 0)
 shader_parameter/specular_color = Color(1, 1, 1, 1)
 shader_parameter/specular_ratio = 1.0
-shader_parameter/glow_color = Color(1, 1, 1, 0.01)
-shader_parameter/glow_distance = 0.5
-shader_parameter/clear_color = Color(0, 0, 0, 0)
+shader_parameter/clear_color = Color(0.00380425, 0.0038465315, 0.0041666627, 1)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(-0.45626265, -0.13222826, 0.87996596, 0, 0.98889786, 0.14859691, -0.8898452, 0.067799225, -0.45119715)
+shader_parameter/_cam_mat = Basis(-0.50972974, -0.04571065, 0.8591194, 0, 0.99858755, 0.05313125, -0.8603346, 0.027082577, -0.5090098)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(16, 16)

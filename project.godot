@@ -15,6 +15,13 @@ run/main_scene="uid://bmmi6fbli5q4t"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[display]
+
+window/size/viewport_width=341
+window/size/viewport_height=256
+window/stretch/mode="viewport"
+window/stretch/aspect="keep_height"
+
 [rendering]
 
 shader_compiler/shader_cache/enabled=false
