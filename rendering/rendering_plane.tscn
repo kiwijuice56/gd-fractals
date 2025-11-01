@@ -1,22 +1,20 @@
 [gd_scene load_steps=6 format=3 uid="uid://cocpy0366csk5"]
 
 [ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_mnrjc"]
-[ext_resource type="ImageTexture3D" uid="uid://03pqkp0f5lu6" path="res://sdf_textures/teto.res" id="2_n23bp"]
+[ext_resource type="ImageTexture3D" uid="uid://d2bfmpiedgdax" path="res://sdf_textures/teto_pear.res" id="2_n23bp"]
 [ext_resource type="Script" uid="uid://cqommosxphppa" path="res://rendering/rendering_plane.gd" id="2_wqimk"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wqimk"]
 render_priority = 0
 shader = ExtResource("1_mnrjc")
-shader_parameter/max_iter = 128
+shader_parameter/max_iter = 339
 shader_parameter/max_bounce = 1
-shader_parameter/collision_threshold = 0.005
-shader_parameter/normal_sample_length = 0.0166
+shader_parameter/collision_threshold = 0.001
+shader_parameter/normal_sample_length = 0.01
 shader_parameter/bulb_runaway_threshold = 2.0
 shader_parameter/color_center_point = Vector3(0, 0.5, -0.5)
 shader_parameter/color_intensity = 0.5
 shader_parameter/sdf_texture = ExtResource("2_n23bp")
-shader_parameter/min_mesh_distance = 0.0
-shader_parameter/max_mesh_distance = 0.0
 shader_parameter/runaway_threshold = 8.0
 shader_parameter/light_ray = Vector3(-0.5, -1, 0)
 shader_parameter/specular_color = Color(1, 1, 1, 1)
@@ -25,7 +23,7 @@ shader_parameter/glow_color = Color(1, 1, 1, 0.01)
 shader_parameter/glow_distance = 0.5
 shader_parameter/clear_color = Color(0, 0, 0, 0)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(-0.45626348, -0.10301515, 0.8838617, 0, 0.99327636, 0.11576755, -0.8898447, 0.052820507, -0.45319572)
+shader_parameter/_cam_mat = Basis(-0.9663893, 0.10823291, -0.23318972, 0, 0.9070591, 0.42100337, 0.25708327, 0.4068531, -0.8765722)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(16, 16)

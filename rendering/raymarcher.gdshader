@@ -17,9 +17,7 @@ uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5);
 uniform float color_intensity = 0.5;
 
 group_uniforms mesh;
-uniform sampler3D sdf_texture: repeat_disable;
-uniform float min_mesh_distance = -1.0;
-uniform float max_mesh_distance = +1.0;
+uniform sampler3D sdf_texture: repeat_disable, filter_linear;
 
 group_uniforms camera;
 uniform float runaway_threshold = 8.0; // Distance where a ray is considered far enough to stop iteration
@@ -141,13 +139,13 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 }
 
 float mesh_DE(vec3 p, inout vec3 collision_info) {
-	vec3 uvw = p / 4.0;
-	uvw = clamp(uvw, vec3(0.0), vec3(1.0));
+	vec3 uvw = p / 2.0;
 	
 	float raw_disance = texture(sdf_texture, uvw).r;
-	float rescaled_distance = raw_disance * (max_mesh_distance - min_mesh_distance) + min_mesh_distance;
+	float rescaled_distance = raw_disance * 2.0 - 1.0;
 	
-	return rescaled_distance;
+	// SDF is "exact", so we should scale it down slightly to prevent clipping 
+	return clamp(rescaled_distance, 0.0, 1.0) * 0.2;
 }
 
 // Returns a vec4 of the color and distance to the closest object as rgba respectively
