@@ -135,6 +135,26 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	return (0.5 * log(r) * r/dr) * _scale;
 }
 
+float julia_DE(vec3 p, inout vec3 collision_info) {
+	vec4 x = vec4(p.x, p.z, 0.0, p.y);
+	vec4 c = vec4(-0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.6);
+	float dr = 1.0;
+
+	for (int i = 0; i < bulb_iter; i++) {
+		if (length(x) > bulb_runaway_threshold) {
+			break;
+		}
+		dr = 2.0 * length(x) * dr + 1.0;
+		x = c + vec4(
+			pow(x.w, 2) - pow(x.x, 2) - pow(x.y, 2) - pow(x.z, 2),
+			2.0 * x.w * x.x,
+			2.0 * x.w * x.y,
+			2.0 * x.w * x.z
+		);
+	}
+	return 0.5 * length(x) * log(length(x)) / dr;
+}
+
 // https://iquilezles.org/articles/
 float smooth_union(float d1, float d2, float k) {
 	k *= 4.0;
@@ -161,9 +181,12 @@ float mesh_DE(vec3 p, inout vec3 collision_info) {
 // distance values for coloring at this point
 float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
 	vec3 bulb_info = vec3(1.0, 1024.0, 0.0);
-	float d1 = 1000.0; // mandelbulb_DE(p, bulb_info);
+	float d1 = 1000.0;//mandelbulb_DE(p, bulb_info);
 	vec3 mesh_info = vec3(1.0, 1024.0, 0.0);
-	float d2 = mesh_DE(p, mesh_info);
+	float d2 = julia_DE(p, mesh_info); //mesh_DE(p, mesh_info);
+
+
+
 	if (d2 < d1) {
 		collision_info = mesh_info;
 		collider_id = 1;
@@ -211,7 +234,7 @@ vec3 get_normal(vec3 ray_pos) {
 void fragment() {
 	// Initialize materials
 	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
-	Material mesh_material = Material(0.55, 0.2, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
+	Material mesh_material = Material(0.15, 0.7, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
 
 	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
@@ -247,7 +270,7 @@ void fragment() {
 		// Reflect the ray
 		ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
 		ray_pos += ray_dir * collision_threshold * 4.0;
-		vec4 hit_color = collision_info.r > 0.5 ? vec4(0.4, 0.4, 0.4, 1.0) : vec4(0.0, 0.4, 1.0, 1.0); // surface_material.albedo_color;
+		vec4 hit_color = collision_info.r > 0.5 ? vec4(0.4, 0.4, 0.4, 1.0) : vec4(0.0, 0.4, 1.0, 1.0);
 		// Ambient occlusion
 		float aa = float(iter) / float(max_iter);
 		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
@@ -255,14 +278,14 @@ void fragment() {
 		float normal_shadow = (0.25 + 0.75 * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_ray))), 1.0/2.4));
 		hit_color *= vec4(pow(normal_shadow, 1.2), pow(normal_shadow, 1.1), normal_shadow, 1.0);
 		// Specular highlights
-		float specular = dot(-normalize(light_ray), ray_dir);
+		float specular = clamp(dot(-normalize(light_ray), ray_dir), 0.0, 1.0);
 		float specular_power = pow(25.0 * (surface_material.roughness - 1.0), 2.0) + 2.0;
 		hit_color += specular_ratio * vec4(specular_color.rgb, 1.0) * vec4(surface_material.specular_alpha) * pow(specular, specular_power);
 		// Mix reflections
 		pixel_color += hit_color * previous_reflectance;
 		previous_reflectance = surface_material.reflectivity;
 	}
-
+	pixel_color.a = 1.0;
 	ALBEDO.rgb = clamp(pixel_color.rgb, vec3(0.0), vec3(1.0));
 	ALPHA = clamp(pixel_color.a, 0.0, 1.0);
 }
