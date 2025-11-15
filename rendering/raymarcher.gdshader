@@ -139,7 +139,6 @@ float julia_DE(vec3 p, inout vec3 collision_info) {
 	vec4 x = vec4(p.x, p.z, 0.0, p.y);
 	vec4 c = vec4(-0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.6);
 	float dr = 1.0;
-
 	for (int i = 0; i < bulb_iter; i++) {
 		if (length(x) > bulb_runaway_threshold) {
 			break;
@@ -155,6 +154,8 @@ float julia_DE(vec3 p, inout vec3 collision_info) {
 	return 0.5 * length(x) * log(length(x)) / dr;
 }
 
+
+
 // https://iquilezles.org/articles/
 float smooth_union(float d1, float d2, float k) {
 	k *= 4.0;
@@ -167,13 +168,29 @@ float smooth_intersection(float d1, float d2, float k) {
 }
 
 float mesh_DE(vec3 p, inout vec3 collision_info) {
-	vec3 uvw = mod(p, 3.0) + vec3(-1.0, 0.0, -2.0);
+	vec3 uvw = p; // mod(p, 3.0) + vec3(-1.0, 0.0, -2.0);
 	float d = texture(sdf_texture, uvw).r * 2.0 - 1.0;
-	float d2 = texture(sdf_texture, uvw + vec3(0.0, 0.5 * sin(TIME) - 0.5, 0.5)).r * 2.0 - 1.0;
+	return d;
+}
 
-	collision_info.r = d < d2 ? 0.0 : 1.0;
-
-	return smooth_intersection(d, d2, 0.1);
+float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
+	float mesh_distance = mesh_DE(p, collision_info);
+	vec4 x = vec4(mesh_distance * abs(p.x), mesh_distance + p.z, -mesh_distance, p.y - mesh_distance);
+	vec4 c = vec4(0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.4 + 0.2 * sin(TIME));
+	float dr = 1.0;
+	for (int i = 0; i < bulb_iter; i++) {
+		if (length(x) > bulb_runaway_threshold) {
+			break;
+		}
+		dr = 2.0 * length(x) * dr + 1.0;
+		x = c + vec4(
+			pow(x.w, 2) - pow(x.x, 2) - pow(x.y, 2) - pow(x.z, 2),
+			2.0 * x.w * x.x,
+			2.0 * x.w * x.y,
+			2.0 * x.w * x.z
+		);
+	}
+	return 0.5 * length(x) * log(length(x)) / dr;
 }
 
 // Returns a vec4 of the color and distance to the closest object as rgba respectively
@@ -183,10 +200,7 @@ float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
 	vec3 bulb_info = vec3(1.0, 1024.0, 0.0);
 	float d1 = 1000.0;//mandelbulb_DE(p, bulb_info);
 	vec3 mesh_info = vec3(1.0, 1024.0, 0.0);
-	float d2 = julia_DE(p, mesh_info); //mesh_DE(p, mesh_info);
-
-
-
+	float d2 = mesh_DE(p, mesh_info);
 	if (d2 < d1) {
 		collision_info = mesh_info;
 		collider_id = 1;
@@ -217,6 +231,8 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 	}
 	return iter;
 }
+
+
 
 vec3 get_normal(vec3 ray_pos) {
 	int _id;

@@ -1,13 +1,13 @@
 [gd_scene load_steps=6 format=3 uid="uid://cocpy0366csk5"]
 
 [ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_mnrjc"]
-[ext_resource type="ImageTexture3D" uid="uid://cu07to3qoin76" path="res://sdf_textures/bunny_128.res" id="2_n23bp"]
+[ext_resource type="ImageTexture3D" uid="uid://03pqkp0f5lu6" path="res://sdf_textures/teto.res" id="2_n23bp"]
 [ext_resource type="Script" uid="uid://cqommosxphppa" path="res://rendering/rendering_plane.gd" id="2_wqimk"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wqimk"]
 render_priority = 0
 shader = ExtResource("1_mnrjc")
-shader_parameter/max_iter = 512
+shader_parameter/max_iter = 128
 shader_parameter/max_bounce = 1
 shader_parameter/collision_threshold = 0.001
 shader_parameter/normal_sample_length = 0.01
@@ -21,15 +21,16 @@ shader_parameter/specular_color = Color(1, 1, 1, 1)
 shader_parameter/specular_ratio = 1.0
 shader_parameter/clear_color = Color(0.019475712, 0.06422869, 0.079802014, 1)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(0.98587817, -0.02750804, 0.16518933, 0, 0.9864167, 0.16426238, -0.16746403, -0.16194269, 0.97248673)
+shader_parameter/_cam_mat = Basis(0.5608264, 0.022331076, 0.8276322, 0, 0.99963623, -0.026972067, -0.82793343, 0.015126647, 0.5606224)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(16, 16)
 orientation = 2
 
 [node name="RenderingPlane" type="MeshInstance3D" unique_id=965001392]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0016857386, 0, 0.0010995865)
 material_override = SubResource("ShaderMaterial_wqimk")
-instance_shader_parameters/_position = Vector3(0, 0, 0)
+instance_shader_parameters/_position = Vector3(0.0016857386, 0, 0.0010995865)
 instance_shader_parameters/_rotation = Vector3(0, 0, 0)
 instance_shader_parameters/_scale = 1.0
 instance_shader_parameters/bulb_iter = 32
