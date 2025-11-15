@@ -29,7 +29,7 @@ render_priority = 0
 shader = ExtResource("1_mnrjc")
 shader_parameter/max_iter = 300
 shader_parameter/max_bounce = 1
-shader_parameter/collision_threshold = 8e-05
+shader_parameter/collision_threshold = 0.00012
 shader_parameter/normal_sample_length = 0.00012
 shader_parameter/bulb_runaway_threshold = 4.0
 shader_parameter/color_center_point = Vector3(0, 0.5, 0.765)
@@ -44,18 +44,18 @@ shader_parameter/specular_color = Color(1, 1, 1, 1)
 shader_parameter/specular_ratio = 0.45
 shader_parameter/clear_color = Color(0.019475712, 0.06422869, 0.079802014, 1)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(0.1536708, -0.3168764, 0.9359352, 0, 0.94718575, 0.32068548, -0.9881221, -0.049279995, 0.1455548)
+shader_parameter/_cam_mat = Basis(0.062722534, -0.23221213, 0.9706408, 0, 0.9725557, 0.23267026, -0.998031, -0.014593668, 0.06100116)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(16, 16)
 orientation = 2
 
 [node name="RenderingPlane" type="MeshInstance3D" unique_id=965001392]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.002055943, 0.0055812597, -0.0075618625)
+transform = Transform3D(1.9, 0, 0, 0, 1.9, 0, 0, 0, 1.9, 0.002055943, 0.0055812597, -0.0075618625)
 material_override = SubResource("ShaderMaterial_wqimk")
 instance_shader_parameters/_position = Vector3(0.002055943, 0.0055812597, -0.0075618625)
 instance_shader_parameters/_rotation = Vector3(0, 0, 0)
-instance_shader_parameters/_scale = 1.0
+instance_shader_parameters/_scale = 1.9
 instance_shader_parameters/bulb_iter = 4
 instance_shader_parameters/bulb_power = 8.0
 mesh = SubResource("PlaneMesh_n23bp")

@@ -6,7 +6,7 @@ render_mode unshaded, depth_prepass_alpha;
 group_uniforms detail;
 uniform int max_iter = 512; // Max iterations a regular collision ray can march
 uniform int max_bounce = 2; // Max times a ray can be reflected
-uniform float collision_threshold = 8.0e-5; // Min distance a ray can be from a surface for it to collide
+uniform float collision_threshold = 12.0e-5; // Min distance a ray can be from a surface for it to collide
 uniform float normal_sample_length = 12.0e-5; // How far along a collided surface to move when sampling for a normal vector
 
 group_uniforms fractal;
@@ -61,6 +61,7 @@ struct Material {
 	vec4 albedo_color;
 };
 
+
 // Rotation functions
 
 mat3 rotation_x(float angle) {
@@ -102,10 +103,6 @@ vec3 rotate_xyz(vec3 p, vec3 angles) {
 // http://blog.hvidtfeldts.net/index.php/2011/09/distance-estimated-3d-fractals-v-the-mandelbulb-different-de-approximations/
 // https://iquilezles.org/articles/ftrapsgeometric/
 float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
-	p -= _position;
-	p = rotate_xyz(p, _rotation);
-	p /= _scale;
-
 	vec3 z = p;
 	float dr = 1.0;
 	float r = 0.0;
@@ -135,7 +132,7 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	}
 	// Divide by arbitrary value
 	collision_info.r *= color_intensity;
-	return (0.5 * log(r) * r/dr) * _scale;
+	return (0.5 * log(r) * r/dr);
 }
 
 float julia_DE(vec3 p, inout vec3 collision_info) {
@@ -177,13 +174,13 @@ float mesh_DE(vec3 p, inout vec3 collision_info) {
 
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	vec3 _garbage;
-	vec4 x = vec4(p, 0.0);
-	float dr = 1.0;
+	highp vec4 x = vec4(p, 0.0);
+	highp float dr = 1.0;
 	for (int i = 0; i < bulb_iter; i++) {
-		float time_alpha = alpha + sin(TIME);
-		float R = exp(time_alpha * (mesh_DE(x.xyz * 0.7, _garbage) + beta));
-		vec3 noise_direction = texture(noise, 2.0 * x.xyz).rgb;
-		vec4 D = normalize(vec4(noise_direction, 0.5 * noise_direction.y));
+		highp float time_alpha = alpha;// + sin(TIME);
+		highp float R = exp(time_alpha * (mesh_DE(x.xyz, _garbage) + beta));
+		highp vec3 noise_direction = texture(noise, 2.0 * x.xyz).rgb;
+		highp vec4 D = normalize(vec4(noise_direction, 0.5 * noise_direction.y));
 		x = D * R;
 		dr = time_alpha * R * dr + 1.0;
 		if (length(x) > bulb_runaway_threshold) {
@@ -199,20 +196,25 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 // `collision_info` holds extra information about the collision; Only stores
 // distance values for coloring at this point
 float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
+	p -= _position;
+	p = rotate_xyz(p, _rotation);
+	p /= _scale;
+
 	vec3 bulb_info = vec3(1.0, 1024.0, 0.0);
-	float d1 = 1000.0;//mandelbulb_DE(p, bulb_info);
+	float d1 = 1000.0;// mandelbulb_DE(p, bulb_info);
 	vec3 mesh_info = vec3(1.0, 1024.0, 0.0);
 	float d2 = mesh_fractal_DE(p, mesh_info);
 	if (d2 < d1) {
 		collision_info = mesh_info;
 		collider_id = 1;
-		return d2;
+		return _scale * d2;
 	} else {
 		collision_info = bulb_info;
 		collider_id = 0;
-		return d1;
+		return _scale * d1;
 	}
 }
+
 
 int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_info) {
 	float dist = 10000.0; // Arbitrary max distance
