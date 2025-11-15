@@ -18,6 +18,8 @@ uniform float color_intensity = 0.5;
 
 group_uniforms mesh;
 uniform sampler3D sdf_texture: repeat_disable, filter_linear;
+uniform float alpha = 1.0;
+uniform float beta = 1.0;
 
 group_uniforms camera;
 uniform float runaway_threshold = 8.0; // Distance where a ray is considered far enough to stop iteration
@@ -154,8 +156,6 @@ float julia_DE(vec3 p, inout vec3 collision_info) {
 	return 0.5 * length(x) * log(length(x)) / dr;
 }
 
-
-
 // https://iquilezles.org/articles/
 float smooth_union(float d1, float d2, float k) {
 	k *= 4.0;
@@ -174,21 +174,31 @@ float mesh_DE(vec3 p, inout vec3 collision_info) {
 }
 
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
-	float mesh_distance = mesh_DE(p, collision_info);
-	vec4 x = vec4(mesh_distance * abs(p.x), mesh_distance + p.z, -mesh_distance, p.y - mesh_distance);
-	vec4 c = vec4(0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.4 + 0.2 * sin(TIME));
+	vec4 x = vec4(p.x, p.z, 0.0, p.y);
+	vec4 c = vec4(-0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.6);
 	float dr = 1.0;
 	for (int i = 0; i < bulb_iter; i++) {
 		if (length(x) > bulb_runaway_threshold) {
 			break;
 		}
 		dr = 2.0 * length(x) * dr + 1.0;
+		
+		// Original julia iteration
 		x = c + vec4(
 			pow(x.w, 2) - pow(x.x, 2) - pow(x.y, 2) - pow(x.z, 2),
 			2.0 * x.w * x.x,
 			2.0 * x.w * x.y,
 			2.0 * x.w * x.z
 		);
+		
+		float R = length(x);
+		vec4 D = x / R;
+		
+		// Stick to mesh surface
+		vec3 garbage_collision_info;
+		float R_hat = exp(alpha * (mesh_DE(x.xyz, garbage_collision_info) + beta));
+		
+		x = D * R_hat;
 	}
 	return 0.5 * length(x) * log(length(x)) / dr;
 }
@@ -200,7 +210,7 @@ float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
 	vec3 bulb_info = vec3(1.0, 1024.0, 0.0);
 	float d1 = 1000.0;//mandelbulb_DE(p, bulb_info);
 	vec3 mesh_info = vec3(1.0, 1024.0, 0.0);
-	float d2 = mesh_DE(p, mesh_info);
+	float d2 = mesh_fractal_DE(p, mesh_info);
 	if (d2 < d1) {
 		collision_info = mesh_info;
 		collider_id = 1;
