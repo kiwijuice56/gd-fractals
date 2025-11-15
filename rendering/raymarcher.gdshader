@@ -6,8 +6,8 @@ render_mode unshaded, depth_prepass_alpha;
 group_uniforms detail;
 uniform int max_iter = 512; // Max iterations a regular collision ray can march
 uniform int max_bounce = 2; // Max times a ray can be reflected
-uniform float collision_threshold = 1.0e-3; // Min distance a ray can be from a surface for it to collide
-uniform float normal_sample_length = 1.0e-2; // How far along a collided surface to move when sampling for a normal vector
+uniform float collision_threshold = 8.0e-5; // Min distance a ray can be from a surface for it to collide
+uniform float normal_sample_length = 12.0e-5; // How far along a collided surface to move when sampling for a normal vector
 
 group_uniforms fractal;
 instance uniform int bulb_iter = 8; // Max iterations of the fractal algorithm
@@ -20,6 +20,7 @@ group_uniforms mesh;
 uniform sampler3D sdf_texture: repeat_disable, filter_linear;
 uniform float alpha = 1.0;
 uniform float beta = 1.0;
+uniform sampler3D noise: repeat_enable, filter_linear;
 
 group_uniforms camera;
 uniform float runaway_threshold = 8.0; // Distance where a ray is considered far enough to stop iteration
@@ -168,37 +169,29 @@ float smooth_intersection(float d1, float d2, float k) {
 }
 
 float mesh_DE(vec3 p, inout vec3 collision_info) {
+	// Uncomment to mirror
 	vec3 uvw = p; // mod(p, 3.0) + vec3(-1.0, 0.0, -2.0);
 	float d = texture(sdf_texture, uvw).r * 2.0 - 1.0;
 	return d;
 }
 
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
-	vec4 x = vec4(p.x, p.z, 0.0, p.y);
-	vec4 c = vec4(-0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.6);
+	vec3 _garbage;
+	vec4 x = vec4(p, 0.0);
 	float dr = 1.0;
 	for (int i = 0; i < bulb_iter; i++) {
+		float time_alpha = alpha + sin(TIME);
+		float R = exp(time_alpha * (mesh_DE(x.xyz * 0.7, _garbage) + beta));
+		vec3 noise_direction = texture(noise, 2.0 * x.xyz).rgb;
+		vec4 D = normalize(vec4(noise_direction, 0.5 * noise_direction.y));
+		x = D * R;
+		dr = time_alpha * R * dr + 1.0;
 		if (length(x) > bulb_runaway_threshold) {
 			break;
 		}
-		dr = 2.0 * length(x) * dr + 1.0;
-		
-		// Original julia iteration
-		vec4 julia_x = c + vec4(
-			pow(x.w, 2) - pow(x.x, 2) - pow(x.y, 2) - pow(x.z, 2),
-			2.0 * x.w * x.x,
-			2.0 * x.w * x.y,
-			2.0 * x.w * x.z
-		);
-		
-		vec4 D = normalize(julia_x);
-		
-		// Stick to mesh surface
-		vec3 garbage_collision_info;
-		float R_hat = exp(alpha * (mesh_DE(x.xyz, garbage_collision_info) + beta));
-		
-		x = D * R_hat;
+		collision_info.r = min(collision_info.r, length(x.xyz - color_center_point));
 	}
+	collision_info.r *= color_intensity;
 	return 0.5 * length(x) * log(length(x)) / dr;
 }
 
@@ -241,8 +234,6 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 	return iter;
 }
 
-
-
 vec3 get_normal(vec3 ray_pos) {
 	int _id;
 	vec3 _col_info;
@@ -258,8 +249,8 @@ vec3 get_normal(vec3 ray_pos) {
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays.html
 void fragment() {
 	// Initialize materials
-	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
-	Material mesh_material = Material(0.15, 0.7, 5.0, 0.95, vec4(0.5, 0.5, 0.5, 1.0));
+	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95, vec4(0.5, 0.2, 0.5, 1.0));
+	Material mesh_material = Material(0.55, 0.7, 5.0, 0.95, vec4(0.5, 0.2, 0.1, 1.0));
 
 	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
@@ -284,8 +275,7 @@ void fragment() {
 			break;
 		}
 		Material surface_material;
-		float x = collision_info.r;
-		x -= floor(x);
+
 		if (collider_id == 0) {
 			surface_material = fractal_material;
 		} else if (collider_id == 1) {
@@ -295,7 +285,11 @@ void fragment() {
 		// Reflect the ray
 		ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
 		ray_pos += ray_dir * collision_threshold * 4.0;
-		vec4 hit_color = collision_info.r > 0.5 ? vec4(0.4, 0.4, 0.4, 1.0) : vec4(0.0, 0.4, 1.0, 1.0);
+
+		float x = collision_info.r;
+		x -= floor(x);
+		vec4 hit_color = vec4(0.2, 0.0, 0.5, 1.0) * x + vec4(0.0, 1.0, 0.0, 1.0) * (1.0 - x);
+
 		// Ambient occlusion
 		float aa = float(iter) / float(max_iter);
 		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
