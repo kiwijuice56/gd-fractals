@@ -15,15 +15,15 @@ shader_parameter/bulb_runaway_threshold = 4.0
 shader_parameter/color_center_point = Vector3(0, 0.5, -0.5)
 shader_parameter/color_intensity = 0.5
 shader_parameter/sdf_texture = ExtResource("2_n23bp")
-shader_parameter/alpha = 0.4
-shader_parameter/beta = 3.92
+shader_parameter/alpha = 0.37
+shader_parameter/beta = 4.315
 shader_parameter/runaway_threshold = 8.0
 shader_parameter/light_ray = Vector3(0.283, 0.225, -0.814)
 shader_parameter/specular_color = Color(1, 1, 1, 1)
 shader_parameter/specular_ratio = 1.0
 shader_parameter/clear_color = Color(0.019475712, 0.06422869, 0.079802014, 1)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(0.7444195, 0.09056802, 0.6615414, 0, 0.9907583, -0.1356393, -0.6677122, 0.10097253, 0.7375398)
+shader_parameter/_cam_mat = Basis(-0.12868705, 0.07859317, 0.98856604, 0, 0.9968546, -0.07925214, -0.9916853, -0.0101987235, -0.12828228)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(16, 16)

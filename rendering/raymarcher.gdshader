@@ -184,15 +184,14 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 		dr = 2.0 * length(x) * dr + 1.0;
 		
 		// Original julia iteration
-		x = c + vec4(
+		vec4 julia_x = c + vec4(
 			pow(x.w, 2) - pow(x.x, 2) - pow(x.y, 2) - pow(x.z, 2),
 			2.0 * x.w * x.x,
 			2.0 * x.w * x.y,
 			2.0 * x.w * x.z
 		);
 		
-		float R = length(x);
-		vec4 D = x / R;
+		vec4 D = normalize(julia_x);
 		
 		// Stick to mesh surface
 		vec3 garbage_collision_info;
