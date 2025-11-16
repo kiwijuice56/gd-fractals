@@ -6,21 +6,26 @@ render_mode unshaded, depth_prepass_alpha;
 group_uniforms detail;
 uniform int max_iter = 512; // Max iterations a regular collision ray can march
 uniform int max_bounce = 2; // Max times a ray can be reflected
-uniform float collision_threshold = 12.0e-5; // Min distance a ray can be from a surface for it to collide
-uniform float normal_sample_length = 12.0e-5; // How far along a collided surface to move when sampling for a normal vector
+uniform float collision_threshold = 6.0e-3; // Min distance a ray can be from a surface for it to collide
+uniform float normal_sample_length = 32.0e-3; // How far along a collided surface to move when sampling for a normal vector
+uniform float march_proportion = 0.5;
 
 group_uniforms fractal;
-instance uniform int bulb_iter = 8; // Max iterations of the fractal algorithm
-instance uniform float bulb_power = 8.0; // Dimension of the fractal
-uniform float bulb_runaway_threshold = 2.0;
-uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5);
+uniform int fractal_iterations = 4; // Max iterations of the fractal algoritms
+uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5); // Color parameters for fractal algorithms
 uniform float color_intensity = 0.5;
+
+group_uniforms mandelbulb;
+uniform float mandelbulb_power = 8.0; // Dimension of the fractal
+uniform float mandelbulb_runaway_threshold = 2.0;
+
+group_uniforms shape_modulus;
+uniform float alpha = 3.15;
+uniform float beta = -0.135;
+uniform sampler3D noise: repeat_enable, filter_linear;
 
 group_uniforms mesh;
 uniform sampler3D sdf_texture: repeat_disable, filter_linear;
-uniform float alpha = 1.0;
-uniform float beta = 1.0;
-uniform sampler3D noise: repeat_enable, filter_linear;
 
 group_uniforms camera;
 uniform float runaway_threshold = 8.0; // Distance where a ray is considered far enough to stop iteration
@@ -52,15 +57,6 @@ void vertex() {
 			MODEL_MATRIX[3]);
 	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
 }
-
-struct Material {
-	float reflectivity;
-	float roughness;
-	float shadow_sharpness;
-	float specular_alpha;
-	vec4 albedo_color;
-};
-
 
 // Rotation functions
 
@@ -106,31 +102,22 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	vec3 z = p;
 	float dr = 1.0;
 	float r = 0.0;
-
-	for (int i = 0; i < bulb_iter; i++) {
+	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(z);
-		if (r > bulb_runaway_threshold)
+		if (r > mandelbulb_runaway_threshold)
 			break;
-
-		// Convert to polar coordinates
 		float theta = acos(z.z/r);
 		float phi = atan(z.y, z.x);
-		dr = pow(r, bulb_power - 1.0) * bulb_power * dr;
-
-		// Scale and rotate the point
-		float zr = pow(r, bulb_power);
-		theta = theta * bulb_power;
-		phi = phi * bulb_power;
-
-		// Convert back to cartesian coordinates
+		dr = pow(r, mandelbulb_power - 1.0) * mandelbulb_power * dr;
+		float zr = pow(r, mandelbulb_power);
+		theta = theta * mandelbulb_power;
+		phi = phi * mandelbulb_power;
 		z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
 		z += p;
-
 		// Store minimum distance along orbit to a random (predetermined) point...
 		// Creates nice colors along fractal "bulbs"
 		collision_info.r = min(collision_info.r, length(z - color_center_point));
 	}
-	// Divide by arbitrary value
 	collision_info.r *= color_intensity;
 	return (0.5 * log(r) * r/dr);
 }
@@ -139,8 +126,8 @@ float julia_DE(vec3 p, inout vec3 collision_info) {
 	vec4 x = vec4(p.x, p.z, 0.0, p.y);
 	vec4 c = vec4(-0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.6);
 	float dr = 1.0;
-	for (int i = 0; i < bulb_iter; i++) {
-		if (length(x) > bulb_runaway_threshold) {
+	for (int i = 0; i < fractal_iterations; i++) {
+		if (length(x) > mandelbulb_runaway_threshold) {
 			break;
 		}
 		dr = 2.0 * length(x) * dr + 1.0;
@@ -174,16 +161,15 @@ float mesh_DE(vec3 p, inout vec3 collision_info) {
 
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	vec3 _garbage;
-	highp vec4 x = vec4(p, 0.0);
-	highp float dr = 1.0;
-	for (int i = 0; i < bulb_iter; i++) {
-		highp float time_alpha = alpha;// + sin(TIME);
-		highp float R = exp(time_alpha * (mesh_DE(x.xyz, _garbage) + beta));
-		highp vec3 noise_direction = texture(noise, 2.0 * x.xyz).rgb;
-		highp vec4 D = normalize(vec4(noise_direction, 0.5 * noise_direction.y));
+	vec4 x = vec4(p, 0.0);
+	float dr = 1.0;
+	for (int i = 0; i < fractal_iterations; i++) {
+		float R = exp(alpha * (mesh_DE(x.xyz , _garbage) + beta));
+		vec3 noise_direction = texture(noise, 2.0 * x.xyz).rgb;
+		vec4 D = normalize(vec4(noise_direction, 0.5 * noise_direction.y));
 		x = D * R;
-		dr = time_alpha * R * dr + 1.0;
-		if (length(x) > bulb_runaway_threshold) {
+		dr = alpha * R * dr + 1.0;
+		if (length(x) > mandelbulb_runaway_threshold) {
 			break;
 		}
 		collision_info.r = min(collision_info.r, length(x.xyz - color_center_point));
@@ -199,9 +185,8 @@ float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
 	p -= _position;
 	p = rotate_xyz(p, _rotation);
 	p /= _scale;
-
 	vec3 bulb_info = vec3(1.0, 1024.0, 0.0);
-	float d1 = 1000.0;// mandelbulb_DE(p, bulb_info);
+	float d1 = 10000.0; // Replace with another DE if desired
 	vec3 mesh_info = vec3(1.0, 1024.0, 0.0);
 	float d2 = mesh_fractal_DE(p, mesh_info);
 	if (d2 < d1) {
@@ -222,7 +207,7 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 	for (int i = 0; i < max_iter; i++) {
 		dist = abs(world_DE(ray_pos, id, collision_info));
 		collision_info.g = min(collision_info.g, dist);
-		ray_pos += ray_dir * dist * 0.4;
+		ray_pos += ray_dir * dist * march_proportion;
 		// We can quit marching early if we are extremely far from the fractal
 		if (dist > runaway_threshold) {
 			iter = max_iter;
@@ -248,11 +233,19 @@ vec3 get_normal(vec3 ray_pos) {
 		);
 }
 
+struct Material {
+	float reflectivity;
+	float roughness;
+	float shadow_sharpness;
+	float specular_alpha;
+	vec4 albedo_color;
+};
+
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays.html
 void fragment() {
 	// Initialize materials
 	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95, vec4(0.5, 0.2, 0.5, 1.0));
-	Material mesh_material = Material(0.55, 0.7, 5.0, 0.95, vec4(0.5, 0.2, 0.1, 1.0));
+	Material mesh_material    = Material(0.55, 0.7, 5.0, 0.95, vec4(0.5, 0.2, 0.1, 1.0));
 
 	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
@@ -277,21 +270,18 @@ void fragment() {
 			break;
 		}
 		Material surface_material;
-
 		if (collider_id == 0) {
 			surface_material = fractal_material;
 		} else if (collider_id == 1) {
 			surface_material = mesh_material;
 		}
-		vec3 normal = get_normal(ray_pos);
+		vec3 normal = -get_normal(ray_pos);
 		// Reflect the ray
 		ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
 		ray_pos += ray_dir * collision_threshold * 4.0;
-
 		float x = collision_info.r;
 		x -= floor(x);
 		vec4 hit_color = vec4(0.2, 0.0, 0.5, 1.0) * x + vec4(0.0, 1.0, 0.0, 1.0) * (1.0 - x);
-
 		// Ambient occlusion
 		float aa = float(iter) / float(max_iter);
 		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;

@@ -10,14 +10,14 @@ colors = PackedColorArray(5.583167e-06, 0.75527513, 0, 1, 0.99999994, 0.7197451,
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_n23bp"]
 noise_type = 3
-frequency = 0.0151
+frequency = 0.0062
 fractal_type = 0
 fractal_lacunarity = 2.385
 domain_warp_amplitude = 3.0
 
 [sub_resource type="NoiseTexture3D" id="NoiseTexture3D_hnudu"]
 width = 128
-height = 32
+height = 128
 depth = 128
 noise = SubResource("FastNoiseLite_n23bp")
 color_ramp = SubResource("Gradient_n23bp")
@@ -27,36 +27,37 @@ seamless_blend_skirt = 0.355
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wqimk"]
 render_priority = 0
 shader = ExtResource("1_mnrjc")
-shader_parameter/max_iter = 300
-shader_parameter/max_bounce = 1
-shader_parameter/collision_threshold = 0.00012
-shader_parameter/normal_sample_length = 0.00012
-shader_parameter/bulb_runaway_threshold = 4.0
+shader_parameter/max_iter = 256
+shader_parameter/max_bounce = 2
+shader_parameter/collision_threshold = 0.008
+shader_parameter/normal_sample_length = 0.005
+shader_parameter/march_proportion = 0.5
+shader_parameter/fractal_iterations = 4
 shader_parameter/color_center_point = Vector3(0, 0.5, 0.765)
 shader_parameter/color_intensity = 0.82
-shader_parameter/sdf_texture = ExtResource("2_n23bp")
-shader_parameter/alpha = -4.26
-shader_parameter/beta = -0.085
+shader_parameter/mandelbulb_power = 8.0
+shader_parameter/mandelbulb_runaway_threshold = 2.0
+shader_parameter/alpha = 3.15
+shader_parameter/beta = -0.135
 shader_parameter/noise = SubResource("NoiseTexture3D_hnudu")
+shader_parameter/sdf_texture = ExtResource("2_n23bp")
 shader_parameter/runaway_threshold = 8.0
-shader_parameter/light_ray = Vector3(0.283, -4.745, -0.814)
+shader_parameter/light_ray = Vector3(-0.847, -3.285, -0.559)
 shader_parameter/specular_color = Color(1, 1, 1, 1)
 shader_parameter/specular_ratio = 0.45
 shader_parameter/clear_color = Color(0.019475712, 0.06422869, 0.079802014, 1)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(0.062722534, -0.23221213, 0.9706408, 0, 0.9725557, 0.23267026, -0.998031, -0.014593668, 0.06100116)
+shader_parameter/_cam_mat = Basis(0.451486, 0.051294863, 0.89080256, 0, 0.9983462, -0.05748752, -0.8922782, 0.02595481, 0.45073932)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(16, 16)
 orientation = 2
 
 [node name="RenderingPlane" type="MeshInstance3D" unique_id=965001392]
-transform = Transform3D(1.9, 0, 0, 0, 1.9, 0, 0, 0, 1.9, 0.002055943, 0.0055812597, -0.0075618625)
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0.0019558668, -2.3841858e-07, -0.002891302)
 material_override = SubResource("ShaderMaterial_wqimk")
-instance_shader_parameters/_position = Vector3(0.002055943, 0.0055812597, -0.0075618625)
+instance_shader_parameters/_position = Vector3(0.0019558668, -2.3841858e-07, -0.002891302)
 instance_shader_parameters/_rotation = Vector3(0, 0, 0)
-instance_shader_parameters/_scale = 1.9
-instance_shader_parameters/bulb_iter = 4
-instance_shader_parameters/bulb_power = 8.0
+instance_shader_parameters/_scale = 2.0
 mesh = SubResource("PlaneMesh_n23bp")
 script = ExtResource("2_wqimk")
