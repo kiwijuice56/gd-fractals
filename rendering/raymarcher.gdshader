@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode unshaded, depth_prepass_alpha;
 
+const float MAX_DISTANCE = 10000.0;
+
 // Decrease iteration and bounce counts for better performance
 // Increase collision threshold for lower detail and better performance
 group_uniforms detail;
@@ -165,8 +167,10 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	float dr = 1.0;
 	for (int i = 0; i < fractal_iterations; i++) {
 		float R = exp(alpha * (mesh_DE(x.xyz , _garbage) + beta));
+		
 		vec3 noise_direction = texture(noise, 2.0 * x.xyz).rgb;
-		vec4 D = normalize(vec4(noise_direction, 0.5 * noise_direction.y));
+		vec4 D = normalize(vec4(noise_direction, noise_direction.y));
+		
 		x = D * R;
 		dr = alpha * R * dr + 1.0;
 		if (length(x) > mandelbulb_runaway_threshold) {
@@ -178,57 +182,45 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	return 0.5 * length(x) * log(length(x)) / dr;
 }
 
-// Returns a vec4 of the color and distance to the closest object as rgba respectively
-// `collision_info` holds extra information about the collision; Only stores
-// distance values for coloring at this point
+// `collision_info` holds extra information about the collision
 float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
 	p -= _position;
 	p = rotate_xyz(p, _rotation);
 	p /= _scale;
-	vec3 bulb_info = vec3(1.0, 1024.0, 0.0);
-	float d1 = 10000.0; // Replace with another DE if desired
-	vec3 mesh_info = vec3(1.0, 1024.0, 0.0);
-	float d2 = mesh_fractal_DE(p, mesh_info);
-	if (d2 < d1) {
-		collision_info = mesh_info;
-		collider_id = 1;
-		return _scale * d2;
-	} else {
-		collision_info = bulb_info;
-		collider_id = 0;
-		return _scale * d1;
-	}
+	
+	collider_id = 1;
+	collision_info.r = 1.0;
+	collision_info.g = MAX_DISTANCE;
+	return _scale * mesh_fractal_DE(p, collision_info);
 }
 
-
 int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_info) {
-	float dist = 10000.0; // Arbitrary max distance
 	int iter = 0;
-	for (int i = 0; i < max_iter; i++) {
-		dist = abs(world_DE(ray_pos, id, collision_info));
-		collision_info.g = min(collision_info.g, dist);
+	for (; iter < max_iter; iter++) {
+		float dist = abs(world_DE(ray_pos, id, collision_info));
+		collision_info.g = min(collision_info.g, dist); // Store for color information
+
 		ray_pos += ray_dir * dist * march_proportion;
-		// We can quit marching early if we are extremely far from the fractal
+
 		if (dist > runaway_threshold) {
 			iter = max_iter;
 			break;
 		}
-		// Once we are close enough to the fractal, we say we collided with it
-		if (dist < collision_threshold)
+
+		if (dist < collision_threshold) {
 			break;
-		iter++;
+		}
 	}
 	return iter;
 }
 
 vec3 get_normal(vec3 ray_pos) {
-	int _id;
-	vec3 _col_info;
+	int _id; vec3 _garbage;
 	return normalize(
 		vec3(
-			world_DE(ray_pos + vec3(normal_sample_length, 0.0, 0.0), _id, _col_info) - world_DE(ray_pos - vec3(normal_sample_length, 0.0, 0.0), _id, _col_info),
-			world_DE(ray_pos + vec3(0.0, normal_sample_length, 0.0), _id, _col_info) - world_DE(ray_pos - vec3(0.0, normal_sample_length, 0.0), _id, _col_info),
-			world_DE(ray_pos + vec3(0.0, 0.0, normal_sample_length), _id, _col_info) - world_DE(ray_pos - vec3(0.0, 0.0, normal_sample_length), _id, _col_info)
+			world_DE(ray_pos + vec3(normal_sample_length, 0.0, 0.0), _id, _garbage) - world_DE(ray_pos - vec3(normal_sample_length, 0.0, 0.0), _id, _garbage),
+			world_DE(ray_pos + vec3(0.0, normal_sample_length, 0.0), _id, _garbage) - world_DE(ray_pos - vec3(0.0, normal_sample_length, 0.0), _id, _garbage),
+			world_DE(ray_pos + vec3(0.0, 0.0, normal_sample_length), _id, _garbage) - world_DE(ray_pos - vec3(0.0, 0.0, normal_sample_length), _id, _garbage)
 			)
 		);
 }
@@ -261,14 +253,14 @@ void fragment() {
 	float previous_reflectance = 1.0;
 	for (int i = 0; i < max_bounce; i++) {
 		int collider_id;
-		vec3 collision_info = vec3(1.0, 1024.0, 0.0);
+		vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 		int iter = march(ray_pos, ray_dir, collider_id, collision_info);
-		// If we iterated up to the maximum amount of times and still haven't collided,
-		// we probably escaped any objects
+
 		if (iter == max_iter) {
 			pixel_color += clear_color * previous_reflectance;
 			break;
 		}
+
 		Material surface_material;
 		if (collider_id == 0) {
 			surface_material = fractal_material;
@@ -276,22 +268,27 @@ void fragment() {
 			surface_material = mesh_material;
 		}
 		vec3 normal = -get_normal(ray_pos);
+
 		// Reflect the ray
 		ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
 		ray_pos += ray_dir * collision_threshold * 4.0;
 		float x = collision_info.r;
 		x -= floor(x);
-		vec4 hit_color = vec4(0.2, 0.0, 0.5, 1.0) * x + vec4(0.0, 1.0, 0.0, 1.0) * (1.0 - x);
+		vec4 hit_color = vec4(0.8, 0.0, 0.5, 1.0) * x + vec4(0.0, 0.2, 0.2, 1.0) * (1.0 - x);
+
 		// Ambient occlusion
 		float aa = float(iter) / float(max_iter);
 		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
+
 		// Shadows based on the normal vector at this surface
 		float normal_shadow = (0.25 + 0.75 * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_ray))), 1.0/2.4));
 		hit_color *= vec4(pow(normal_shadow, 1.2), pow(normal_shadow, 1.1), normal_shadow, 1.0);
+
 		// Specular highlights
 		float specular = clamp(dot(-normalize(light_ray), ray_dir), 0.0, 1.0);
 		float specular_power = pow(25.0 * (surface_material.roughness - 1.0), 2.0) + 2.0;
 		hit_color += specular_ratio * vec4(specular_color.rgb, 1.0) * vec4(surface_material.specular_alpha) * pow(specular, specular_power);
+
 		// Mix reflections
 		pixel_color += hit_color * previous_reflectance;
 		previous_reflectance = surface_material.reflectivity;

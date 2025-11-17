@@ -27,14 +27,14 @@ seamless_blend_skirt = 0.355
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wqimk"]
 render_priority = 0
 shader = ExtResource("1_mnrjc")
-shader_parameter/max_iter = 256
-shader_parameter/max_bounce = 2
-shader_parameter/collision_threshold = 0.008
+shader_parameter/max_iter = 128
+shader_parameter/max_bounce = 1
+shader_parameter/collision_threshold = 0.005
 shader_parameter/normal_sample_length = 0.005
 shader_parameter/march_proportion = 0.5
-shader_parameter/fractal_iterations = 4
-shader_parameter/color_center_point = Vector3(0, 0.5, 0.765)
-shader_parameter/color_intensity = 0.82
+shader_parameter/fractal_iterations = 3
+shader_parameter/color_center_point = Vector3(0.605, -0.25, 0.765)
+shader_parameter/color_intensity = 0.4
 shader_parameter/mandelbulb_power = 8.0
 shader_parameter/mandelbulb_runaway_threshold = 2.0
 shader_parameter/alpha = 3.15
@@ -47,7 +47,7 @@ shader_parameter/specular_color = Color(1, 1, 1, 1)
 shader_parameter/specular_ratio = 0.45
 shader_parameter/clear_color = Color(0.019475712, 0.06422869, 0.079802014, 1)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(0.451486, 0.051294863, 0.89080256, 0, 0.9983462, -0.05748752, -0.8922782, 0.02595481, 0.45073932)
+shader_parameter/_cam_mat = Basis(0.28520045, 0.584083, 0.7599394, 0, 0.79286885, -0.60939234, -0.9584679, 0.17379898, 0.22612657)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(16, 16)
