@@ -156,26 +156,35 @@ float smooth_intersection(float d1, float d2, float k) {
 
 float mesh_DE(vec3 p, inout vec3 collision_info) {
 	// Uncomment to mirror
-	vec3 uvw = p; // mod(p, 3.0) + vec3(-1.0, 0.0, -2.0);
+	vec3 uvw = p; 
 	float d = texture(sdf_texture, uvw).r * 2.0 - 1.0;
 	return d;
 }
 
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	vec3 _garbage;
-	vec4 x = vec4(p, 0.0);
+	vec4 x = vec4(p , 0.0);
 	float dr = 1.0;
+	vec3 portal_center =  vec3(0.6, 0.8, 0.0);
+	
 	for (int i = 0; i < fractal_iterations; i++) {
+		collision_info.b = float(i + 1) / float(fractal_iterations);
+		
+		float portal_distance = distance(x.xyz, portal_center);
+		float transform_weight = portal_distance <  0.4 ? 1.0 : 0.0;//smoothstep(1.0, 0.8, portal_distance * 2.0); 
+		vec4 teleported_x = x + (x - vec4(portal_center, 0.0)) * 1.0;
+		x = mix(x, teleported_x, transform_weight);
+		
 		float R = exp(alpha * (mesh_DE(x.xyz , _garbage) + beta));
 		
-		vec3 noise_direction = texture(noise, 2.0 * x.xyz).rgb;
+		vec3 noise_direction = texture(noise, 1.5 * x.xyz).rgb;
 		vec4 D = normalize(vec4(noise_direction, noise_direction.y));
 		
 		x = D * R;
+		dr *= (1.0 + 2.0 * transform_weight); // portal derivative scaling
 		dr = alpha * R * dr + 1.0;
-		if (length(x) > mandelbulb_runaway_threshold) {
-			break;
-		}
+		
+		
 		collision_info.r = min(collision_info.r, length(x.xyz - color_center_point));
 	}
 	collision_info.r *= color_intensity;
@@ -191,6 +200,7 @@ float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
 	collider_id = 1;
 	collision_info.r = 1.0;
 	collision_info.g = MAX_DISTANCE;
+	collision_info.b = 0.0;
 	return _scale * mesh_fractal_DE(p, collision_info);
 }
 
@@ -199,14 +209,14 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 	for (; iter < max_iter; iter++) {
 		float dist = abs(world_DE(ray_pos, id, collision_info));
 		collision_info.g = min(collision_info.g, dist); // Store for color information
-
+		
 		ray_pos += ray_dir * dist * march_proportion;
-
+		
 		if (dist > runaway_threshold) {
 			iter = max_iter;
 			break;
 		}
-
+		
 		if (dist < collision_threshold) {
 			break;
 		}
@@ -255,12 +265,12 @@ void fragment() {
 		int collider_id;
 		vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 		int iter = march(ray_pos, ray_dir, collider_id, collision_info);
-
+		
 		if (iter == max_iter) {
 			pixel_color += clear_color * previous_reflectance;
 			break;
 		}
-
+		
 		Material surface_material;
 		if (collider_id == 0) {
 			surface_material = fractal_material;
@@ -272,23 +282,26 @@ void fragment() {
 		// Reflect the ray
 		ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
 		ray_pos += ray_dir * collision_threshold * 4.0;
-		float x = collision_info.r;
-		x -= floor(x);
-		vec4 hit_color = vec4(0.8, 0.0, 0.5, 1.0) * x + vec4(0.0, 0.2, 0.2, 1.0) * (1.0 - x);
-
+		
+		// Get albedo
+		float fractal_mix = collision_info.r;
+		fractal_mix -= floor(fractal_mix);
+		vec4 hit_color = vec4(0.8, 0.0, 0.5, 1.0) * fractal_mix + vec4(0.0, 0.2, 0.2, 1.0) * (1.0 - fractal_mix);
+		//hit_color.rgb = vec3(0.0, 0.0, collision_info.b);
+		
 		// Ambient occlusion
 		float aa = float(iter) / float(max_iter);
 		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
-
+		
 		// Shadows based on the normal vector at this surface
 		float normal_shadow = (0.25 + 0.75 * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_ray))), 1.0/2.4));
 		hit_color *= vec4(pow(normal_shadow, 1.2), pow(normal_shadow, 1.1), normal_shadow, 1.0);
-
-		// Specular highlights
+		
+		// Spec	ular highlights
 		float specular = clamp(dot(-normalize(light_ray), ray_dir), 0.0, 1.0);
 		float specular_power = pow(25.0 * (surface_material.roughness - 1.0), 2.0) + 2.0;
 		hit_color += specular_ratio * vec4(specular_color.rgb, 1.0) * vec4(surface_material.specular_alpha) * pow(specular, specular_power);
-
+		
 		// Mix reflections
 		pixel_color += hit_color * previous_reflectance;
 		previous_reflectance = surface_material.reflectivity;
