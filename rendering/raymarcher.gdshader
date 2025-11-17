@@ -163,30 +163,31 @@ float mesh_DE(vec3 p, inout vec3 collision_info) {
 
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	vec3 _garbage;
-	vec4 x = vec4(p , 0.0);
+	vec4 x = vec4(p, 0.0);
 	float dr = 1.0;
-	vec3 portal_center =  vec3(0.6, 0.8, 0.0);
+	
+	const vec3 portal_center = vec3(0.5, 0.7, 0.0);
+	const float portal_radius = 0.25;
+	const float portal_scale = 4.5;
+	const float noise_frequency = 1.5;
 	
 	for (int i = 0; i < fractal_iterations; i++) {
-		collision_info.b = float(i + 1) / float(fractal_iterations);
-		
-		float portal_distance = distance(x.xyz, portal_center);
-		float transform_weight = portal_distance <  0.4 ? 1.0 : 0.0;//smoothstep(1.0, 0.8, portal_distance * 2.0); 
-		vec4 teleported_x = x + (x - vec4(portal_center, 0.0)) * 1.0;
-		x = mix(x, teleported_x, transform_weight);
-		
-		float R = exp(alpha * (mesh_DE(x.xyz , _garbage) + beta));
-		
-		vec3 noise_direction = texture(noise, 1.5 * x.xyz).rgb;
-		vec4 D = normalize(vec4(noise_direction, noise_direction.y));
-		
-		x = D * R;
-		dr *= (1.0 + 2.0 * transform_weight); // portal derivative scaling
-		dr = alpha * R * dr + 1.0;
-		
-		
 		collision_info.r = min(collision_info.r, length(x.xyz - color_center_point));
+		
+		vec3 D = normalize(texture(noise, noise_frequency * x.xyz).rgb);
+		float phi = mesh_DE(x.xyz, _garbage);
+		float R = exp(alpha * (phi + beta));
+		
+		float dist_to_portal = length(x.xyz - portal_center);
+		if (dist_to_portal < portal_radius) {
+			x.xyz = dist_to_portal * normalize(x.xyz - portal_center) * portal_scale; 
+			dr *= portal_scale;
+		} else {
+			x.xyz = D * R;
+			dr = alpha * R * dr + 1.0;
+		}
 	}
+	
 	collision_info.r *= color_intensity;
 	return 0.5 * length(x) * log(length(x)) / dr;
 }

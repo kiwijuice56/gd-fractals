@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://cqommosxphppa" path="res://rendering/rendering_plane.gd" id="2_wqimk"]
 
 [sub_resource type="Gradient" id="Gradient_n23bp"]
-offsets = PackedFloat32Array(0, 0.1680498, 0.5580913, 1)
+offsets = PackedFloat32Array(0, 0.2219917, 0.62033194, 1)
 colors = PackedColorArray(5.583167e-06, 0.75527513, 0, 1, 0.5187836, 0.57336307, 0.3197342, 1, 0.9425936, 0.3554801, 0.68030995, 1, 0.3254902, 1, 1, 1)
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_n23bp"]
@@ -31,16 +31,16 @@ render_priority = 0
 shader = ExtResource("1_mnrjc")
 shader_parameter/max_iter = 128
 shader_parameter/max_bounce = 1
-shader_parameter/collision_threshold = 0.025
+shader_parameter/collision_threshold = 0.005
 shader_parameter/normal_sample_length = 0.005
-shader_parameter/march_proportion = 0.4
-shader_parameter/fractal_iterations = 10
+shader_parameter/march_proportion = 0.235
+shader_parameter/fractal_iterations = 4
 shader_parameter/color_center_point = Vector3(0.605, -0.25, 0.765)
 shader_parameter/color_intensity = 0.4
-shader_parameter/mandelbulb_power = 8.0
+shader_parameter/mandelbulb_power = 8.09
 shader_parameter/mandelbulb_runaway_threshold = 2.29
-shader_parameter/alpha = 1.35
-shader_parameter/beta = -0.305
+shader_parameter/alpha = 1.855
+shader_parameter/beta = -0.27
 shader_parameter/noise = SubResource("NoiseTexture3D_hnudu")
 shader_parameter/sdf_texture = ExtResource("2_n23bp")
 shader_parameter/runaway_threshold = 8.0
@@ -49,7 +49,7 @@ shader_parameter/specular_color = Color(1, 1, 1, 1)
 shader_parameter/specular_ratio = 0.135
 shader_parameter/clear_color = Color(0.019475712, 0.06422869, 0.079802014, 1)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(-0.7069229, -0.18847506, 0.6817163, 0, 0.9638419, 0.2664747, -0.7072906, 0.18837705, -0.6813619)
+shader_parameter/_cam_mat = Basis(-0.660337, -0.193791, 0.7255344, 0, 0.9661304, 0.25805447, -0.7509694, 0.1704029, -0.6379717)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(16, 16)
