@@ -4,6 +4,7 @@ render_mode unshaded, depth_prepass_alpha;
 const float MAX_DISTANCE = 10000.0;
 const float SMOOTH_UNION_MULTIPLIER = 4.0;
 const float BOUNCE_EPSILON_MULTIPLIER = 4.0;
+const float SHADOW_EPSILON_MULTIPLIER = 4.0;
 
 // Decrease iteration and bounce counts for better performance
 // Increase collision threshold for lower detail and better performance
@@ -30,6 +31,7 @@ uniform float beta = -0.135;
 uniform sampler3D noise: repeat_enable, filter_linear;
 uniform float noise_frequency = 2.0;
 uniform vec3 portal_center = vec3(0.5, 0.6, 0.0);
+uniform vec3 portal_offset = vec3(0.45, 0.6, 0.2);
 uniform float portal_radius = 0.3;
 uniform float portal_scale = 4.0;
 
@@ -41,19 +43,19 @@ uniform vec3 light_direction = vec3(0.0, -1.0, 0.0);
 uniform float base_smoothness = 24.0;
 uniform vec3 specular_color: source_color = vec3(1.0, 1.0, 1.0);
 uniform float specular_ratio : hint_range(0.0, 1.0) = 1.0;
-uniform float shadow_darkness : hint_range(0.0, 1.0) = 0.75;
+uniform bool real_shadows_enabled = false;
+uniform float fake_shadow_darkness : hint_range(0.0, 1.0) = 0.75;
+uniform float real_shadow_darkness : hint_range(0.0, 1.0) = 0.65;
 uniform vec3 shadow_absorption = vec3(1.2, 1.1, 1.0);
 uniform float shadow_softness : hint_range(0.0, 1.0) = 0.416;
 
 group_uniforms scene;
 uniform vec4 clear_color: source_color;
 
-// Updated by script only
+// Updated automatically by script to match real camera and object
 group_uniforms internal;
 uniform float _fov = 86.0;
 uniform mat3 _cam_mat = mat3(0.0); // Camera basis matrix
-
-// Transform of the object
 instance uniform vec3 _position = vec3(0.0);
 instance uniform float _scale = 1.0;
 instance uniform vec3 _rotation;
@@ -169,7 +171,7 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 		
 		float dist_to_portal = length(x.xyz - portal_center);
 		if (dist_to_portal < portal_radius) {
-			x.xyz = dist_to_portal * normalize(x.xyz - portal_center) * portal_scale; 
+			x.xyz = dist_to_portal * normalize(x.xyz - portal_center) * portal_scale + portal_offset; 
 			dr *= portal_scale;
 		} else {
 			vec3 D = normalize(texture(noise, noise_frequency * x.xyz).rgb);
@@ -177,9 +179,8 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + beta));
 			x.xyz = D * R;
 			dr = alpha * R * dr + 1.0;
+			collision_info.r = min(collision_info.r, length(x.xyz - color_center_point));
 		}
-		
-		collision_info.r = min(collision_info.r, length(x.xyz - color_center_point));
 	}
 	
 	collision_info.r *= color_balance;
@@ -236,7 +237,7 @@ struct Material {
 
 void fragment() {
 	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95, vec4(0.5, 0.2, 0.5, 1.0));
-	Material mesh_material    = Material(0.55, 0.7, 5.0, 0.95, vec4(0.5, 0.2, 0.1, 1.0));
+	Material mesh_material    = Material(0.25, 0.7, 5.0, 0.95, vec4(0.5, 0.2, 0.1, 1.0));
 	
 	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
@@ -270,21 +271,36 @@ void fragment() {
 		
 		vec3 normal = -get_normal(ray_pos);
 		
+		// Shadow raymarching
+		float shadow_occlusion = 1.0;
+		if (real_shadows_enabled) {
+			vec3 old_ray = ray_pos;
+			int shadow_collider_id;
+			vec3 shadow_collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
+			ray_pos -= light_direction * collision_threshold * BOUNCE_EPSILON_MULTIPLIER;
+			int shadow_iter = march(ray_pos, -light_direction, shadow_collider_id, shadow_collision_info);
+			shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(max_iter), 0.5);
+			ray_pos = old_ray;
+		}
+		
 		// Reflect the ray for future bounces
 		ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
-		ray_pos += ray_dir * collision_threshold * BOUNCE_EPSILON_MULTIPLIER;
+		ray_pos += ray_dir * collision_threshold * SHADOW_EPSILON_MULTIPLIER;
 		
 		// Albedo (slightly hacky, changes based on what fractal/DE is being rendered)
-		float fractal_mix = fract(collision_info.r);
-		vec4 hit_color = vec4(0.8, 0.0, 0.5, 1.0) * fractal_mix + vec4(0.0, 0.2, 0.2, 1.0) * (1.0 - fractal_mix);
+		float fractal_mix = abs(fract(4.0 * collision_info.r));
+		vec4 hit_color = vec4(0.6, 0.0, 0.5, 1.0) * fractal_mix + vec4(0.0, 0.3, 0.2, 1.0) * (1.0 - fractal_mix);
 		
 		// Ambient occlusion
 		float aa = float(iter) / float(max_iter);
 		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
 		
 		// Shadows based on the normal only
-		float normal_shadow = ((1.0 - shadow_darkness) + shadow_darkness * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_direction))), shadow_softness));
+		float normal_shadow = ((1.0 - fake_shadow_darkness) + fake_shadow_darkness * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_direction))), shadow_softness));
 		hit_color *= vec4(pow(normal_shadow, shadow_absorption.r), pow(normal_shadow, shadow_absorption.g), normal_shadow, shadow_absorption.b);
+		
+		// Shadows based on geometry
+		hit_color *= vec4(pow(shadow_occlusion, shadow_absorption.r), pow(shadow_occlusion, shadow_absorption.g), shadow_occlusion, shadow_absorption.b);
 		
 		// Specular highlights
 		float specular = clamp(dot(-normalize(light_direction), ray_dir), 0.0, 1.0);
