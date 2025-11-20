@@ -15,11 +15,15 @@ run/main_scene="uid://bmmi6fbli5q4t"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="uid://c42upxp8pldkb"
 
+[debug]
+
+settings/stdout/print_fps=true
+
 [display]
 
-window/size/viewport_width=800
-window/size/viewport_height=600
-window/stretch/mode="canvas_items"
+window/size/viewport_width=300
+window/size/viewport_height=256
+window/stretch/mode="viewport"
 window/stretch/aspect="keep_height"
 
 [rendering]
