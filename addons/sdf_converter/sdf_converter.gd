@@ -38,7 +38,7 @@ func _enter_tree() -> void:
 	vbox.add_child(input_label)
 	
 	input_path_input = LineEdit.new()
-	input_path_input.placeholder_text = "Path to .obj file (res://.../thing.obj)"
+	input_path_input.placeholder_text = "Path to input .obj file (res://.../thing.obj)"
 	vbox.add_child(input_path_input)
 	
 	# Output path
@@ -47,7 +47,7 @@ func _enter_tree() -> void:
 	vbox.add_child(output_label)
 	
 	output_path_input = LineEdit.new()
-	output_path_input.placeholder_text = "Path for output .res file res://.../thing.res"
+	output_path_input.placeholder_text = "Path for output .res file (res://.../thing.res)"
 	vbox.add_child(output_path_input)
 	
 	generate_button = Button.new()
@@ -121,8 +121,6 @@ static func load_sdf_texture(path: String, texture_size: int = 64) -> ImageTextu
 	var data: PackedByteArray = file.get_buffer(texture_size * texture_size * texture_size)
 	file.close()
 	
-	
-	 
 	var images: Array[Image] = []
 	var bytes_per_slice = texture_size * texture_size
 	

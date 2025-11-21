@@ -60,14 +60,13 @@ shader_parameter/shadow_absorption = Vector3(1.295, 1.1, 1)
 shader_parameter/shadow_softness = 0.5430000257925
 shader_parameter/clear_color = Color(0.0192, 0.0648, 0.08, 0)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(-0.5612989, -0.18681449, 0.806253, 0, 0.97419065, 0.22572681, -0.8276132, 0.12670021, -0.5468122)
-
+shader_parameter/_cam_mat = Basis(-0.5198639, 0.17462215, 0.8362109, 0, 0.9788841, -0.20441596, -0.8542491, -0.10626847, -0.5088865)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
-size = Vector2(16, 16)
+size = Vector2(4, 4)
 orientation = 2
 
-[node name="RenderingPlane" type="MeshInstance3D"]
+[node name="RenderingPlane" type="MeshInstance3D" unique_id=1777341348]
 material_override = SubResource("ShaderMaterial_wqimk")
 cast_shadow = 0
 extra_cull_margin = 16.0

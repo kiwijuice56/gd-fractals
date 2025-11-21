@@ -1,15 +1,80 @@
-[gd_scene load_steps=3 format=3 uid="uid://bmmi6fbli5q4t"]
+[gd_scene load_steps=11 format=3 uid="uid://bmmi6fbli5q4t"]
 
-[ext_resource type="PackedScene" uid="uid://cocpy0366csk5" path="res://rendering/rendering_plane.tscn" id="1_ig7tw"]
-[ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://camera.gd" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://free_look_camera.gd" id="2_0xm2m"]
+[ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://examples/bunny_scene.tscn" id="2_h2yge"]
+[ext_resource type="Shader" uid="uid://txdiegqab6us" path="res://dither.gdshader" id="3_h2yge"]
 
-[node name="Main" type="Node"]
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
 
-[node name="RenderingPlane" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("1_ig7tw")]
-transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0, 0)
-instance_shader_parameters/_rotation = Vector3(0, 0.5235988, 0)
-camera = NodePath("../MirrorCamera")
+[sub_resource type="Sky" id="Sky_h2yge"]
+sky_material = SubResource("ProceduralSkyMaterial_0xm2m")
 
-[node name="MirrorCamera" type="Camera3D" parent="."]
+[sub_resource type="Environment" id="Environment_0xm2m"]
+background_mode = 2
+sky = SubResource("Sky_h2yge")
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.3
+volumetric_fog_albedo = Color(0.9547927, 0.9026788, 0.9360225, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1bvp3"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_0xm2m"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_0xm2m"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1bvp3"]
+shader = ExtResource("3_h2yge")
+shader_parameter/resolution_downsampling = 1.0
+shader_parameter/bit_depth = 14.0
+
+[node name="Main" type="Node" unique_id=1500513351]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=904793790]
+transform = Transform3D(1, 0, 0, 0, -0.50000006, 0.8660254, 0, -0.8660254, -0.50000006, 0, 1, 0)
+light_energy = 0.2
+shadow_enabled = true
+shadow_blur = 2.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=269938194]
+environment = SubResource("Environment_0xm2m")
+
+[node name="FreeLookCamera" type="Camera3D" parent="." unique_id=1986274605]
 transform = Transform3D(-4.3545054e-08, -0.08715574, 0.9961947, -3.8096983e-09, 0.9961947, 0.08715574, -1, -4.440892e-16, -4.371139e-08, 1.6558222, 0.6141418, 0.15462565)
 script = ExtResource("2_0xm2m")
+sensitivity = 0.2
+
+[node name="BunnyScene" parent="." unique_id=965001392 node_paths=PackedStringArray("camera") instance=ExtResource("2_h2yge")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+instance_shader_parameters/_position = Vector3(0, 0.5, 0)
+camera = NodePath("../FreeLookCamera")
+
+[node name="BunnyScene2" parent="." unique_id=46388979 node_paths=PackedStringArray("camera") instance=ExtResource("2_h2yge")]
+transform = Transform3D(0.87031275, 5.9604645e-08, 0.49249956, 0.42018965, 0.5216203, -0.7425315, -0.25689778, 0.8531778, 0.4539727, -1, 0.5, -1)
+instance_shader_parameters/_position = Vector3(-1, 0.5, -1)
+instance_shader_parameters/_rotation = Vector3(0.8368419, 0.8260814, 0.6781142)
+camera = NodePath("../FreeLookCamera")
+
+[node name="Setting" type="Node3D" parent="." unique_id=1770848609]
+
+[node name="Floor" type="MeshInstance3D" parent="Setting" unique_id=905927767]
+transform = Transform3D(50, 0, 0, 0, 1, 0, 0, 0, 50, 0, -0.29999995, 0)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = SubResource("PlaneMesh_0xm2m")
+
+[node name="Cube" type="MeshInstance3D" parent="Setting" unique_id=314887289]
+transform = Transform3D(0.9659258, 0, -0.25881904, 0, 1, 0, 0.25881904, 0, 0.9659258, -0.98047996, -0.49999994, 1.4490607)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="Cube2" type="MeshInstance3D" parent="Setting" unique_id=567787676]
+transform = Transform3D(0.86602545, 0, 0.5, 0, 1, 0, -0.5, 0, 0.86602545, 0.5, 5.9604645e-08, -1.4244003)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="Dither" type="ColorRect" parent="." unique_id=1953038721]
+material = SubResource("ShaderMaterial_1bvp3")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

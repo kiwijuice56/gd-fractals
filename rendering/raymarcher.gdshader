@@ -1,6 +1,7 @@
 shader_type spatial;
 render_mode unshaded, depth_prepass_alpha;
 
+const float SAFE_MARCH_THRESHOLD = 1.0;
 const float MAX_DISTANCE = 10000.0;
 const float SMOOTH_UNION_MULTIPLIER = 4.0;
 const float BOUNCE_EPSILON_MULTIPLIER = 4.0;
@@ -136,7 +137,7 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 
 float julia_DE(vec3 p, inout vec3 collision_info) {
 	vec4 x = vec4(p.x, p.z, 0.0, p.y);
-	vec4 c = vec4(0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.6); 
+	vec4 c = vec4(0.0, -0.3 - 0.5 * sin(TIME), -0.3, -0.6);
 	float r = 0.0;
 	float dr = 1.0;
 
@@ -163,7 +164,8 @@ float mesh_DE(vec3 p, inout vec3 collision_info) {
 }
 
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
-	vec4 x = vec4(p, 0.0);
+	// Center the fractal
+	vec4 x = vec4(p + vec3(0.5), 0.0);
 	float r = 0.0;
 	float dr = 1.0;
 
@@ -205,7 +207,7 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 		float dist = abs(world_DE(ray_pos, id, collision_info));
 		collision_info.g = min(collision_info.g, dist);
 
-		ray_pos += ray_dir * dist * march_proportion;
+		ray_pos += ray_dir * dist * (distance(ray_pos, _position) > SAFE_MARCH_THRESHOLD ? 1.0 : march_proportion);
 
 		if (dist > runaway_threshold) {
 			iter = max_iter;
@@ -269,9 +271,9 @@ void fragment() {
 		} else if (collider_id == 1) {
 			surface_material = mesh_material;
 		}
-		
+
 		vec3 normal = -get_normal(ray_pos);
-		
+
 		// Shadow raymarching
 		float shadow_occlusion = 1.0;
 		if (real_shadows_enabled) {
@@ -292,7 +294,7 @@ void fragment() {
 		// Ambient occlusion
 		float aa = float(iter) / float(max_iter);
 		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
-		
+
 		// Shadows based on normal only
 		float normal_shadow = ((1.0 - fake_shadow_darkness) + fake_shadow_darkness * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_direction))), shadow_softness));
 		hit_color *= vec4(pow(normal_shadow, shadow_absorption.r), pow(normal_shadow, shadow_absorption.g), normal_shadow, shadow_absorption.b);

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://cyg8hpbibrrl2"]
+[gd_scene load_steps=9 format=3 uid="uid://cyg8hpbibrrl2"]
 
 [ext_resource type="PackedScene" uid="uid://cocpy0366csk5" path="res://rendering/rendering_plane.tscn" id="1_3swqs"]
 [ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="2_w5sbp"]
@@ -29,13 +29,13 @@ seamless_blend_skirt = 0.355
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5hk1t"]
 render_priority = 0
 shader = ExtResource("2_w5sbp")
-shader_parameter/max_iter = 256
+shader_parameter/max_iter = 128
 shader_parameter/max_bounce = 1
-shader_parameter/collision_threshold = 0.001
+shader_parameter/collision_threshold = 0.01
 shader_parameter/normal_sample_length = 0.003
-shader_parameter/march_proportion = 0.235
-shader_parameter/runaway_threshold = 8.0
-shader_parameter/fractal_iterations = 8
+shader_parameter/march_proportion = 0.2000000095
+shader_parameter/runaway_threshold = 4.0
+shader_parameter/fractal_iterations = 5
 shader_parameter/color_center_point = Vector3(0.705, -0.25, 0.765)
 shader_parameter/color_balance = 0.50000002375
 shader_parameter/mandelbulb_power = 8.09
@@ -44,23 +44,32 @@ shader_parameter/alpha = 1.825
 shader_parameter/beta = -0.26
 shader_parameter/noise = SubResource("NoiseTexture3D_hnudu")
 shader_parameter/noise_frequency = 2.79
-shader_parameter/portal_center = Vector3(0.765, 0.785, 0.085)
-shader_parameter/portal_offset = Vector3(0.45, 0.6, 0.2)
-shader_parameter/portal_radius = 0.235
-shader_parameter/portal_scale = 3.385
+shader_parameter/portal_center = Vector3(0.63, 0.79, 0.085)
+shader_parameter/portal_offset = Vector3(0.565, 0.59, 0.3)
+shader_parameter/portal_radius = 0.25
+shader_parameter/portal_scale = 2.5300000000000002
 shader_parameter/sdf_texture = ExtResource("3_sg1s6")
-shader_parameter/light_direction = Vector3(-0.1, -1.17, 0.255)
+shader_parameter/light_direction = Vector3(0, -0.866, 0.5)
 shader_parameter/base_smoothness = 24.585
 shader_parameter/specular_color = Color(1, 1, 1, 1)
-shader_parameter/specular_ratio = 0.2530000120175
-shader_parameter/real_shadows_enabled = true
-shader_parameter/fake_shadow_darkness = 0.6870000326325
-shader_parameter/real_shadow_darkness = 0.44800002128
+shader_parameter/specular_ratio = 0.2190000104025
+shader_parameter/real_shadows_enabled = false
+shader_parameter/fake_shadow_darkness = 0.74400003534
+shader_parameter/real_shadow_darkness = 0.342000016245
 shader_parameter/shadow_absorption = Vector3(1.295, 1.1, 1)
 shader_parameter/shadow_softness = 0.5430000257925
-shader_parameter/clear_color = Color(0.019475712, 0.06422869, 0.079802014, 1)
+shader_parameter/clear_color = Color(0, 0, 0, 0)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(-0.5198639, 0.17462215, 0.8362109, 0, 0.9788841, -0.20441596, -0.8542491, -0.10626847, -0.5088865)
+shader_parameter/_cam_mat = Basis(-0.82017076, -0.23818125, -0.5201823, 0, 0.90922076, -0.41631433, 0.5721188, -0.3414488, -0.7457163)
+
+[sub_resource type="SphereMesh" id="SphereMesh_pefpt"]
+radius = 0.3
+height = 0.7
 
 [node name="BunnyScene" unique_id=965001392 instance=ExtResource("1_3swqs")]
 material_override = SubResource("ShaderMaterial_5hk1t")
+
+[node name="ShadowCaster" type="MeshInstance3D" parent="." index="0" unique_id=1930642558]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+cast_shadow = 3
+mesh = SubResource("SphereMesh_pefpt")
