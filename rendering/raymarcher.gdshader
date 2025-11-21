@@ -1,52 +1,53 @@
 shader_type spatial;
 render_mode unshaded, depth_prepass_alpha;
 
-const float MAX_DISTANCE = 10000.0;
-const float SMOOTH_UNION_MULTIPLIER = 4.0;
-const float BOUNCE_EPSILON_MULTIPLIER = 4.0;
-const float SHADOW_EPSILON_MULTIPLIER = 4.0;
+// Some constants that you probably don't need to change
+const float MAX_DISTANCE = 10000.0; // Placeholder value for infinitely far away distances
+const float SMOOTH_UNION_MULTIPLIER = 4.0; // See smooth_union(...)
+const float BOUNCE_EPSILON_MULTIPLIER = 4.0; // Controls how far a ray should move away from a surface to prevent artifacts during shadows/bounces
+const float SHADOW_EPSILON_MULTIPLIER = 4.0; 
 
 group_uniforms raymarching;
-uniform int max_iter = 512; // Max iterations a regular collision ray can march
-uniform int max_bounce = 2; // Max times a ray can be reflected
-uniform float collision_threshold = 6.0e-3; // Min distance a ray can be from a surface for it to collide
-uniform float normal_sample_length = 32.0e-3; // How far along a collided surface to move when sampling for a normal vector
-uniform float march_proportion : hint_range(0.0, 1.0) = 0.5; // How far a ray marches along the given distance (lower is safer)
-uniform float runaway_threshold = 8.0; // Distance where a ray is considered far enough to stop iteration
-uniform float bounding_radius = 2.0;
+uniform int max_iterations = 256; // Max iterations any ray can march
+uniform int max_bounce = 1; // Max times a ray can be reflected 
+uniform float collision_threshold = 0.01; // Min distance a ray can be from a surface for it to collide
+uniform float normal_sample_length = 0.003; // How far along a collided surface to move when sampling for a normal 
+uniform float march_proportion : hint_range(0.0, 1.0) = 0.5; // Controls how far along the distance to advance the ray each step (lower = less artifacts, worse performance)
+uniform float runaway_threshold = 10.0; // Distance where a ray is considered far enough to stop iteration
+uniform float bounding_radius = 5.0; // Radius of the sphere bounding the entire scene (tighter = better performance)
 
 group_uniforms fractal;
 uniform int fractal_iterations = 4; // Max iterations of the fractal algoritms
 uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5); // Color parameters for fractal algorithms
-uniform float color_balance: hint_range(0.0, 1.0) = 0.5;
+uniform float color_balance: hint_range(0.0, 1.0) = 0.5; // Sliding scale for the two fractal colors
 
 group_uniforms mandelbulb;
 uniform float mandelbulb_power = 8.0;
 uniform float mandelbulb_runaway_threshold = 2.0;
 
 group_uniforms shape_modulus;
-uniform float alpha = 3.15;
-uniform float beta = -0.135;
-uniform sampler3D noise: repeat_enable, filter_linear;
+uniform float alpha = 3.15; // "cutoff" value of the fractal
+uniform float beta = -0.135; // "thickness" of fractal surface
+uniform sampler3D noise: repeat_enable, filter_linear; // Used to give surface fractal-like detail
 uniform float noise_frequency = 2.0;
-uniform vec3 portal_center = vec3(0.5, 0.6, 0.0);
-uniform vec3 portal_offset = vec3(0.45, 0.6, 0.2);
+uniform vec3 portal_center = vec3(0.5, 0.6, 0.0); // Position of the portal
+uniform vec3 portal_offset = vec3(0.45, 0.6, 0.2); // Position that the portal should teleport to
 uniform float portal_radius = 0.3;
 uniform float portal_scale = 4.0;
 
 group_uniforms mesh;
-uniform sampler3D sdf_texture: repeat_disable, filter_linear;
+uniform sampler3D sdf_texture: repeat_disable, filter_linear; // Signed distance function
 
 // "real" shadows are calculated by bouncing rays in the direction of the light source
 // "fake" shadows are calculated by comparing normals with the light direction
 // Although ideally "real" shadows are the only necessary ones, having fake shadows can
 // make details in the surface show and service when there are performance constraints
 group_uniforms lighting;
-uniform vec3 light_direction = vec3(0.0, -1.0, 0.0);
+uniform vec3 light_direction = vec3(0.0, -1.0, 0.0); // Should be synced in GDscript to some DirectionalLight3D
 uniform float base_smoothness = 24.0;
 uniform vec3 specular_color: source_color = vec3(1.0, 1.0, 1.0);
 uniform float specular_ratio : hint_range(0.0, 1.0) = 1.0;
-uniform bool real_shadows_enabled = false;
+uniform bool real_shadows_enabled = true;
 uniform float fake_shadow_darkness : hint_range(0.0, 1.0) = 0.75;
 uniform float real_shadow_darkness : hint_range(0.0, 1.0) = 0.65;
 uniform vec3 shadow_absorption = vec3(1.2, 1.1, 1.0);
@@ -54,10 +55,6 @@ uniform float shadow_softness : hint_range(0.0, 1.0) = 0.416;
 
 group_uniforms scene;
 uniform vec4 clear_color: source_color;
-
-// Updated automatically by script to match real camera and object
-group_uniforms internal;
-uniform float _fov = 86.0;
 
 void vertex() {
 	// Make the rendering plane a billboard
@@ -173,14 +170,14 @@ float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
 
 int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_info) {
 	int iter = 0;
-	for (; iter < max_iter; iter++) {
+	for (; iter < max_iterations; iter++) {
 		float dist = abs(world_DE(ray_pos, id, collision_info));
 		collision_info.g = min(collision_info.g, dist);
 
 		ray_pos += ray_dir * dist * march_proportion;
 
 		if (dist > runaway_threshold) {
-			iter = max_iter;
+			iter = max_iterations;
 			break;
 		}
 
@@ -229,7 +226,7 @@ void fragment() {
 	float aspect_ratio = VIEWPORT_SIZE.x / VIEWPORT_SIZE.y;
 	float fov = atan(-1.0 / PROJECTION_MATRIX[1][1]);
 	float px = aspect_ratio * (2.0 * uv.x - 1.0) * fov;
-	float py = (1.0 - 2.0 * uv.y) * tan(_fov * PI / 360.0);
+	float py = (1.0 - 2.0 * uv.y) * fov;
 	vec3 ray_dir = vec3(px, py, -1);
 	ray_dir = (INV_VIEW_MATRIX * vec4(normalize(ray_dir), 0.0)).xyz;
 	ray_dir = normalize(inverse(MODEL_MATRIX) * vec4(ray_dir, 0.0)).xyz;
@@ -245,19 +242,19 @@ void fragment() {
 		}
 
 		// March through scene, bouncing at collisions to create reflections
-		vec4 pixel_color = clear_color;
+		vec4 pixel_color = vec4(0.0);
 		float previous_reflectance = 1.0;
 		for (int i = 0; i < max_bounce; i++) {
 			// Find contact point and object
 			int collider_id;
 			vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 			int iter = march(ray_pos, ray_dir, collider_id, collision_info);
-
-			if (iter == max_iter) {
+			
+			if (iter == max_iterations) {
 				pixel_color += clear_color * previous_reflectance;
 				break;
 			}
-
+			
 			Material surface_material;
 			if (collider_id == 0) {
 				surface_material = fractal_material;
@@ -275,7 +272,7 @@ void fragment() {
 				vec3 shadow_collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 				ray_pos -= light_direction * collision_threshold * SHADOW_EPSILON_MULTIPLIER;
 				int shadow_iter = march(ray_pos, -light_direction, shadow_collider_id, shadow_collision_info);
-				shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(max_iter), 0.5);
+				shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(max_iterations), 0.5);
 				ray_pos = old_ray;
 			}
 			// Reflect the ray for future bounces
@@ -285,7 +282,7 @@ void fragment() {
 			float fractal_mix = abs(fract(4.0 * collision_info.r));
 			vec4 hit_color = vec4(0.6, 0.0, 0.5, 1.0) * fractal_mix + vec4(0.0, 0.3, 0.2, 1.0) * (1.0 - fractal_mix);
 			// Ambient occlusion
-			float aa = float(iter) / float(max_iter);
+			float aa = float(iter) / float(max_iterations);
 			hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
 
 			// Shadows based on normal only

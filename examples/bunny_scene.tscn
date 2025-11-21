@@ -29,7 +29,7 @@ seamless_blend_skirt = 0.355
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5hk1t"]
 render_priority = 0
 shader = ExtResource("2_w5sbp")
-shader_parameter/max_iter = 128
+shader_parameter/max_iterations = 512
 shader_parameter/max_bounce = 1
 shader_parameter/collision_threshold = 0.01
 shader_parameter/normal_sample_length = 0.003
@@ -60,7 +60,6 @@ shader_parameter/real_shadow_darkness = 0.342000016245
 shader_parameter/shadow_absorption = Vector3(1.295, 1.1, 1)
 shader_parameter/shadow_softness = 0.5430000257925
 shader_parameter/clear_color = Color(0, 0, 0, 0)
-shader_parameter/_fov = 70.01
 
 [sub_resource type="SphereMesh" id="SphereMesh_pefpt"]
 radius = 0.3
