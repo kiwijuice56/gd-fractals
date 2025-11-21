@@ -1,7 +1,6 @@
 shader_type spatial;
 render_mode unshaded, depth_prepass_alpha;
 
-const float SAFE_MARCH_THRESHOLD = 1.0;
 const float MAX_DISTANCE = 10000.0;
 const float SMOOTH_UNION_MULTIPLIER = 4.0;
 const float BOUNCE_EPSILON_MULTIPLIER = 4.0;
@@ -14,6 +13,7 @@ uniform float collision_threshold = 6.0e-3; // Min distance a ray can be from a 
 uniform float normal_sample_length = 32.0e-3; // How far along a collided surface to move when sampling for a normal vector
 uniform float march_proportion : hint_range(0.0, 1.0) = 0.5; // How far a ray marches along the given distance (lower is safer)
 uniform float runaway_threshold = 8.0; // Distance where a ray is considered far enough to stop iteration
+uniform float bounding_radius = 2.0;
 
 group_uniforms fractal;
 uniform int fractal_iterations = 4; // Max iterations of the fractal algoritms
@@ -58,10 +58,6 @@ uniform vec4 clear_color: source_color;
 // Updated automatically by script to match real camera and object
 group_uniforms internal;
 uniform float _fov = 86.0;
-uniform mat3 _cam_mat = mat3(0.0); // Camera basis matrix
-instance uniform vec3 _position = vec3(0.0);
-instance uniform float _scale = 1.0;
-instance uniform vec3 _rotation;
 
 void vertex() {
 	// Make the rendering plane a billboard
@@ -71,27 +67,6 @@ void vertex() {
 			MAIN_CAM_INV_VIEW_MATRIX[2],
 			MODEL_MATRIX[3]);
 	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
-}
-
-/* Rotation functions */
-
-mat3 rotation_x(float angle) {
-	float s = sin(angle); float c = cos(angle);
-	return mat3(vec3(1.0, 0.0, 0.0), vec3(0.0, c, -s), vec3(0.0, s, c));
-}
-
-mat3 rotation_y(float angle) {
-	float s = sin(angle); float c = cos(angle);
-	return mat3(vec3(c, 0.0, s), vec3(0.0, 1.0, 0.0), vec3(-s, 0.0, c));
-}
-
-mat3 rotation_z(float angle) {
-	float s = sin(angle); float c = cos(angle);
-	return mat3(vec3(c, -s, 0.0), vec3(s, c, 0.0), vec3(0.0, 0.0, 1.0));
-}
-
-vec3 rotate_xyz(vec3 p, vec3 angles) {
-	return rotation_z(angles.z) * rotation_y(angles.y) * rotation_x(angles.x) * p;
 }
 
 /* Helper distance estimates */
@@ -191,14 +166,9 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 }
 
 float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
-	p -= _position;
-	p = rotate_xyz(p, _rotation);
-	p /= _scale;
-
 	collider_id = 1;
 	collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
-
-	return _scale * mesh_fractal_DE(p, collision_info);
+	return mesh_fractal_DE(p, collision_info);
 }
 
 int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_info) {
@@ -207,7 +177,7 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 		float dist = abs(world_DE(ray_pos, id, collision_info));
 		collision_info.g = min(collision_info.g, dist);
 
-		ray_pos += ray_dir * dist * (distance(ray_pos, _position) > SAFE_MARCH_THRESHOLD ? 1.0 : march_proportion);
+		ray_pos += ray_dir * dist * march_proportion;
 
 		if (dist > runaway_threshold) {
 			iter = max_iter;
@@ -220,6 +190,17 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 	}
 	return iter;
 }
+
+float intersect_sphere(vec3 ray_pos, vec3 ray_dir, float radius) {
+	float b = dot(ray_pos, ray_dir);
+	float c = dot(ray_pos, ray_pos) - radius * radius;
+	float h = b * b - c;
+
+	if (h < 0.0) return -1.0;
+
+	return -b - sqrt(h);
+}
+
 
 vec3 get_normal(vec3 ray_pos) {
 	int _id; vec3 _garbage;
@@ -242,75 +223,91 @@ void fragment() {
 	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95, vec4(0.5, 0.2, 0.5, 1.0));
 	Material mesh_material    = Material(0.25, 0.7, 5.0, 0.95, vec4(0.5, 0.2, 0.1, 1.0));
 
-	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation
+	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation and node transform
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
 	vec2 uv = SCREEN_UV;
 	float aspect_ratio = VIEWPORT_SIZE.x / VIEWPORT_SIZE.y;
-	float px = aspect_ratio * (2.0 * uv.x - 1.0) * tan(_fov * PI / 360.0);
+	float fov = atan(-1.0 / PROJECTION_MATRIX[1][1]);
+	float px = aspect_ratio * (2.0 * uv.x - 1.0) * fov;
 	float py = (1.0 - 2.0 * uv.y) * tan(_fov * PI / 360.0);
 	vec3 ray_dir = vec3(px, py, -1);
-	ray_dir = _cam_mat * normalize(ray_dir);
+	ray_dir = (INV_VIEW_MATRIX * vec4(normalize(ray_dir), 0.0)).xyz;
+	ray_dir = normalize(inverse(MODEL_MATRIX) * vec4(ray_dir, 0.0)).xyz;
+	ray_pos = (inverse(MODEL_MATRIX) * vec4(ray_pos, 1.0)).xyz;
 
-	// March through scene, bouncing at collisions to create reflections
-	vec4 pixel_color = clear_color;
-	float previous_reflectance = 1.0;
-	for (int i = 0; i < max_bounce; i++) {
-		// Find contact point and object
-		int collider_id;
-		vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
-		int iter = march(ray_pos, ray_dir, collider_id, collision_info);
+	float t = intersect_sphere(ray_pos, ray_dir, bounding_radius);
+	bool inside_bound = length(ray_pos) < bounding_radius;
 
-		if (iter == max_iter) {
-			pixel_color += clear_color * previous_reflectance;
-			break;
+	if (inside_bound || t > 0.0) {
+		// Project to outside of bounding sphere to reduce wasted marches far away
+		if (!inside_bound) {
+			ray_pos = ray_pos + ray_dir * t;
 		}
 
-		Material surface_material;
-		if (collider_id == 0) {
-			surface_material = fractal_material;
-		} else if (collider_id == 1) {
-			surface_material = mesh_material;
+		// March through scene, bouncing at collisions to create reflections
+		vec4 pixel_color = clear_color;
+		float previous_reflectance = 1.0;
+		for (int i = 0; i < max_bounce; i++) {
+			// Find contact point and object
+			int collider_id;
+			vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
+			int iter = march(ray_pos, ray_dir, collider_id, collision_info);
+
+			if (iter == max_iter) {
+				pixel_color += clear_color * previous_reflectance;
+				break;
+			}
+
+			Material surface_material;
+			if (collider_id == 0) {
+				surface_material = fractal_material;
+			} else if (collider_id == 1) {
+				surface_material = mesh_material;
+			}
+
+			vec3 normal = -get_normal(ray_pos);
+
+			// Shadow raymarching
+			float shadow_occlusion = 1.0;
+			if (real_shadows_enabled) {
+				vec3 old_ray = ray_pos;
+				int shadow_collider_id;
+				vec3 shadow_collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
+				ray_pos -= light_direction * collision_threshold * SHADOW_EPSILON_MULTIPLIER;
+				int shadow_iter = march(ray_pos, -light_direction, shadow_collider_id, shadow_collision_info);
+				shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(max_iter), 0.5);
+				ray_pos = old_ray;
+			}
+			// Reflect the ray for future bounces
+			ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
+			ray_pos += ray_dir * collision_threshold * BOUNCE_EPSILON_MULTIPLIER;
+			// Albedo (slightly hacky, changes based on what fractal/DE is being rendered)
+			float fractal_mix = abs(fract(4.0 * collision_info.r));
+			vec4 hit_color = vec4(0.6, 0.0, 0.5, 1.0) * fractal_mix + vec4(0.0, 0.3, 0.2, 1.0) * (1.0 - fractal_mix);
+			// Ambient occlusion
+			float aa = float(iter) / float(max_iter);
+			hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
+
+			// Shadows based on normal only
+			float normal_shadow = ((1.0 - fake_shadow_darkness) + fake_shadow_darkness * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_direction))), shadow_softness));
+			hit_color *= vec4(pow(normal_shadow, shadow_absorption.r), pow(normal_shadow, shadow_absorption.g), normal_shadow, shadow_absorption.b);
+
+			// Shadows based on geometry
+			hit_color *= vec4(pow(shadow_occlusion, shadow_absorption.r), pow(shadow_occlusion, shadow_absorption.g), shadow_occlusion, shadow_absorption.b);
+
+			// Specular highlights
+			float specular = clamp(dot(-normalize(light_direction), ray_dir), 0.0, 1.0);
+			float specular_power = pow(base_smoothness * (surface_material.roughness - 1.0), 2.0);
+			hit_color += specular_ratio * vec4(specular_color.rgb, 1.0) * vec4(surface_material.specular_alpha) * pow(specular, specular_power);
+
+			// Mix reflections
+			pixel_color += hit_color * previous_reflectance;
+			previous_reflectance = surface_material.reflectivity;
 		}
-
-		vec3 normal = -get_normal(ray_pos);
-
-		// Shadow raymarching
-		float shadow_occlusion = 1.0;
-		if (real_shadows_enabled) {
-			vec3 old_ray = ray_pos;
-			int shadow_collider_id;
-			vec3 shadow_collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
-			ray_pos -= light_direction * collision_threshold * SHADOW_EPSILON_MULTIPLIER;
-			int shadow_iter = march(ray_pos, -light_direction, shadow_collider_id, shadow_collision_info);
-			shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(max_iter), 0.5);
-			ray_pos = old_ray;
-		}
-		// Reflect the ray for future bounces
-		ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
-		ray_pos += ray_dir * collision_threshold * SHADOW_EPSILON_MULTIPLIER;
-		// Albedo (slightly hacky, changes based on what fractal/DE is being rendered)
-		float fractal_mix = abs(fract(4.0 * collision_info.r));
-		vec4 hit_color = vec4(0.6, 0.0, 0.5, 1.0) * fractal_mix + vec4(0.0, 0.3, 0.2, 1.0) * (1.0 - fractal_mix);
-		// Ambient occlusion
-		float aa = float(iter) / float(max_iter);
-		hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
-
-		// Shadows based on normal only
-		float normal_shadow = ((1.0 - fake_shadow_darkness) + fake_shadow_darkness * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_direction))), shadow_softness));
-		hit_color *= vec4(pow(normal_shadow, shadow_absorption.r), pow(normal_shadow, shadow_absorption.g), normal_shadow, shadow_absorption.b);
-
-		// Shadows based on geometry
-		hit_color *= vec4(pow(shadow_occlusion, shadow_absorption.r), pow(shadow_occlusion, shadow_absorption.g), shadow_occlusion, shadow_absorption.b);
-
-		// Specular highlights
-		float specular = clamp(dot(-normalize(light_direction), ray_dir), 0.0, 1.0);
-		float specular_power = pow(base_smoothness * (surface_material.roughness - 1.0), 2.0);
-		hit_color += specular_ratio * vec4(specular_color.rgb, 1.0) * vec4(surface_material.specular_alpha) * pow(specular, specular_power);
-
-		// Mix reflections
-		pixel_color += hit_color * previous_reflectance;
-		previous_reflectance = surface_material.reflectivity;
+		ALBEDO.rgb = clamp(pixel_color.rgb, vec3(0.0), vec3(1.0));
+		ALPHA = pixel_color.a;
+	} else {
+		ALBEDO = clear_color.rgb;
+		ALPHA = clear_color.a;
 	}
-	ALBEDO.rgb = clamp(pixel_color.rgb, vec3(0.0), vec3(1.0));
-	ALPHA = pixel_color.a;
 }

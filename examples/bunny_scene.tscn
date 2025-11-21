@@ -35,6 +35,7 @@ shader_parameter/collision_threshold = 0.01
 shader_parameter/normal_sample_length = 0.003
 shader_parameter/march_proportion = 0.2000000095
 shader_parameter/runaway_threshold = 4.0
+shader_parameter/bounding_radius = 1.0
 shader_parameter/fractal_iterations = 5
 shader_parameter/color_center_point = Vector3(0.705, -0.25, 0.765)
 shader_parameter/color_balance = 0.50000002375
@@ -60,7 +61,6 @@ shader_parameter/shadow_absorption = Vector3(1.295, 1.1, 1)
 shader_parameter/shadow_softness = 0.5430000257925
 shader_parameter/clear_color = Color(0, 0, 0, 0)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(-0.82017076, -0.23818125, -0.5201823, 0, 0.90922076, -0.41631433, 0.5721188, -0.3414488, -0.7457163)
 
 [sub_resource type="SphereMesh" id="SphereMesh_pefpt"]
 radius = 0.3
