@@ -5,21 +5,24 @@ render_mode unshaded, depth_prepass_alpha;
 const float MAX_DISTANCE = 10000.0; // Placeholder value for infinitely far away distances
 const float SMOOTH_UNION_MULTIPLIER = 4.0; // See smooth_union(...)
 const float BOUNCE_EPSILON_MULTIPLIER = 4.0; // Controls how far a ray should move away from a surface to prevent artifacts during shadows/bounces
-const float SHADOW_EPSILON_MULTIPLIER = 4.0; 
+const float SHADOW_EPSILON_MULTIPLIER = 4.0;
 
 group_uniforms raymarching;
 uniform int max_iterations = 256; // Max iterations any ray can march
-uniform int max_bounce = 1; // Max times a ray can be reflected 
+uniform int max_bounce = 1; // Max times a ray can be reflected
 uniform float collision_threshold = 0.01; // Min distance a ray can be from a surface for it to collide
-uniform float normal_sample_length = 0.003; // How far along a collided surface to move when sampling for a normal 
+uniform float normal_sample_length = 0.003; // How far along a collided surface to move when sampling for a normal
 uniform float march_proportion : hint_range(0.0, 1.0) = 0.5; // Controls how far along the distance to advance the ray each step (lower = less artifacts, worse performance)
 uniform float runaway_threshold = 10.0; // Distance where a ray is considered far enough to stop iteration
 uniform float bounding_radius = 5.0; // Radius of the sphere bounding the entire scene (tighter = better performance)
 
 group_uniforms fractal;
 uniform int fractal_iterations = 4; // Max iterations of the fractal algoritms
+uniform vec4 fractal_color_1: source_color = vec4(0.6, 0.0, 0.5, 1.0);
+uniform vec4 fractal_color_2: source_color = vec4(0.0, 0.3, 0.2, 1.0);
 uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5); // Color parameters for fractal algorithms
 uniform float color_balance: hint_range(0.0, 1.0) = 0.5; // Sliding scale for the two fractal colors
+uniform float fractal_animation_amount = 0.3;
 
 group_uniforms mandelbulb;
 uniform float mandelbulb_power = 8.0;
@@ -149,12 +152,12 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 			x.xyz = dist_to_portal * normalize(x.xyz - portal_center) * portal_scale + portal_offset;
 			dr *= portal_scale;
 		} else {
-			vec3 D = normalize(texture(noise, 0.3*sin(vec3(0.2,0.3,0.2) * TIME) + noise_frequency * x.xyz).rgb);
+			vec3 D = normalize(texture(noise, fractal_animation_amount * sin(vec3(0.2, 0.3, 0.2) * TIME) + noise_frequency * x.xyz).rgb);
 			vec3 _garbage;
-			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + beta));
+			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + beta + 0.01 * sin(TIME) - 0.01));
 			x.xyz = D * R;
 			dr = alpha * R * dr + 1.0;
-			collision_info.r = min(collision_info.r, length(x.xyz - color_center_point));
+			collision_info.r += 32.0 * R * D.x;
 		}
 	}
 
@@ -213,12 +216,11 @@ struct Material {
 	float roughness;
 	float shadow_sharpness;
 	float specular_alpha;
-	vec4 albedo_color;
 };
 
 void fragment() {
-	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95, vec4(0.5, 0.2, 0.5, 1.0));
-	Material mesh_material    = Material(0.25, 0.7, 5.0, 0.95, vec4(0.5, 0.2, 0.1, 1.0));
+	Material fractal_material = Material(0.25, 0.5, 5.0, 0.95);
+	Material mesh_material    = Material(0.25, 0.7, 5.0, 0.95);
 
 	// Take the pixel position (UV) and convert it into a ray based on the camera's orientation and node transform
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
@@ -249,12 +251,12 @@ void fragment() {
 			int collider_id;
 			vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 			int iter = march(ray_pos, ray_dir, collider_id, collision_info);
-			
+
 			if (iter == max_iterations) {
 				pixel_color += clear_color * previous_reflectance;
 				break;
 			}
-			
+
 			Material surface_material;
 			if (collider_id == 0) {
 				surface_material = fractal_material;
@@ -270,23 +272,28 @@ void fragment() {
 				vec3 old_ray = ray_pos;
 				int shadow_collider_id;
 				vec3 shadow_collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
-				ray_pos -= light_direction * collision_threshold * SHADOW_EPSILON_MULTIPLIER;
-				int shadow_iter = march(ray_pos, -light_direction, shadow_collider_id, shadow_collision_info);
+				vec3 corrected_light_direction =  normalize(inverse(MODEL_MATRIX) * vec4(light_direction, 0.0)).xyz;
+				ray_pos -= corrected_light_direction * collision_threshold * SHADOW_EPSILON_MULTIPLIER;
+				int shadow_iter = march(ray_pos, -corrected_light_direction, shadow_collider_id, shadow_collision_info);
 				shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(max_iterations), 0.5);
 				ray_pos = old_ray;
 			}
+
 			// Reflect the ray for future bounces
 			ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
 			ray_pos += ray_dir * collision_threshold * BOUNCE_EPSILON_MULTIPLIER;
+
 			// Albedo (slightly hacky, changes based on what fractal/DE is being rendered)
-			float fractal_mix = abs(fract(4.0 * collision_info.r));
-			vec4 hit_color = vec4(0.6, 0.0, 0.5, 1.0) * fractal_mix + vec4(0.0, 0.3, 0.2, 1.0) * (1.0 - fractal_mix);
+			float fractal_mix = 0.5 + 0.5 * sin(collision_info.r);
+			vec4 hit_color = fractal_color_1 * fractal_mix + fractal_color_2 * (1.0 - fractal_mix);
+
 			// Ambient occlusion
 			float aa = float(iter) / float(max_iterations);
 			hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
 
 			// Shadows based on normal only
-			float normal_shadow = ((1.0 - fake_shadow_darkness) + fake_shadow_darkness * pow(max(0.0, specular_ratio * dot(normal, -normalize(light_direction))), shadow_softness));
+			vec3 corrected_light_direction =  normalize(inverse(MODEL_MATRIX) * vec4(light_direction, 0.0)).xyz;
+			float normal_shadow = ((1.0 - fake_shadow_darkness) + fake_shadow_darkness * pow(max(0.0, specular_ratio * dot(normal, -normalize(corrected_light_direction))), shadow_softness));
 			hit_color *= vec4(pow(normal_shadow, shadow_absorption.r), pow(normal_shadow, shadow_absorption.g), normal_shadow, shadow_absorption.b);
 
 			// Shadows based on geometry

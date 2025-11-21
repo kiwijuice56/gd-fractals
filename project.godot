@@ -13,6 +13,7 @@ config_version=5
 config/name="fractal-fish"
 run/main_scene="uid://bmmi6fbli5q4t"
 config/features=PackedStringArray("4.6", "Forward Plus")
+run/max_fps=60
 config/icon="uid://c42upxp8pldkb"
 
 [debug]

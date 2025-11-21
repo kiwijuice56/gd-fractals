@@ -1,7 +1,8 @@
-[gd_scene load_steps=11 format=3 uid="uid://bmmi6fbli5q4t"]
+[gd_scene load_steps=12 format=3 uid="uid://bmmi6fbli5q4t"]
 
 [ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://free_look_camera.gd" id="2_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://examples/bunny_scene.tscn" id="2_h2yge"]
+[ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://examples/bird_scene.tscn" id="3_1bvp3"]
 [ext_resource type="Shader" uid="uid://txdiegqab6us" path="res://dither.gdshader" id="3_h2yge"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
@@ -43,16 +44,11 @@ transform = Transform3D(-4.3545054e-08, -0.08715574, 0.9961947, -3.8096983e-09, 
 script = ExtResource("2_0xm2m")
 sensitivity = 0.2
 
-[node name="BunnyScene" parent="." unique_id=965001392 node_paths=PackedStringArray("camera") instance=ExtResource("2_h2yge")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-instance_shader_parameters/_position = Vector3(0, 0.5, 0)
-camera = NodePath("../FreeLookCamera")
+[node name="BunnyScene" parent="." unique_id=965001392 instance=ExtResource("2_h2yge")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -1.9, 0.5, -0.90000004)
 
-[node name="BunnyScene2" parent="." unique_id=46388979 node_paths=PackedStringArray("camera") instance=ExtResource("2_h2yge")]
-transform = Transform3D(0.87031275, 5.9604645e-08, 0.49249956, 0.42018965, 0.5216203, -0.7425315, -0.25689778, 0.8531778, 0.4539727, -1, 0.5, -1)
-instance_shader_parameters/_position = Vector3(-1, 0.5, -1)
-instance_shader_parameters/_rotation = Vector3(0.8368419, 0.8260814, 0.6781142)
-camera = NodePath("../FreeLookCamera")
+[node name="BirdScene" parent="." unique_id=2124899352 instance=ExtResource("3_1bvp3")]
+transform = Transform3D(0.7880831, 0, 0.39999998, 0, 0.99999994, 0, -0.45499998, 0, 0.69282025, 0, 0.5, 0)
 
 [node name="Setting" type="Node3D" parent="." unique_id=1770848609]
 
@@ -72,6 +68,7 @@ material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
 
 [node name="Dither" type="ColorRect" parent="." unique_id=1953038721]
+visible = false
 material = SubResource("ShaderMaterial_1bvp3")
 anchors_preset = 15
 anchor_right = 1.0

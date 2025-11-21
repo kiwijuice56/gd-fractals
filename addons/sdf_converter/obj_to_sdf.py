@@ -8,7 +8,7 @@ print("Generating .sdf (signed distance function) from .obj file...")
 obj_path = str(sys.argv[1])
 sdf_path = obj_path.replace(".obj", ".sdf")
 N = int(sys.argv[2])
-padding = 0.05
+padding = 0.25
 
 script_path = os.path.realpath(__file__)
 script_directory = os.path.dirname(script_path)
