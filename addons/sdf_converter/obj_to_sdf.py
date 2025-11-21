@@ -1,16 +1,20 @@
 import trimesh
 import numpy as np
+import sys
+import os
 
-####  Parameters ####
+print("Generating .sdf (signed distance function) from .obj file...")
 
-N = 64 # The texture size
-model_input = 'teto.obj' # Should be inside input/ folder
-model_output = 'teto_64.sdf' # Should be inside output/ folder
+obj_path = str(sys.argv[1])
+sdf_path = obj_path.replace(".obj", ".sdf")
+N = int(sys.argv[2])
 padding = 0.05
 
-#####################
+script_path = os.path.realpath(__file__)
+script_directory = os.path.dirname(script_path)
 
-mesh = trimesh.load('input/' + model_input)
+mesh = trimesh.load(obj_path)
+
 bounds_min = mesh.bounds[0] - padding * mesh.extents
 bounds_max = mesh.bounds[1] + padding * mesh.extents
 x = np.linspace(bounds_min[0], bounds_max[0], N)
@@ -38,5 +42,5 @@ sdf_grid = sdf_grid / np.abs(sdf_grid).max()
 normalized = (sdf_grid + 1.0) / 2.0
 texture_data = (normalized * 255).astype(np.uint8)
 
-with open('output/' + model_output, 'wb') as f:
+with open(sdf_path, 'wb') as f:
     f.write(texture_data.tobytes())

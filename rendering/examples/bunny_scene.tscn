@@ -1,8 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://cocpy0366csk5"]
+[gd_scene load_steps=8 format=3 uid="uid://cyg8hpbibrrl2"]
 
-[ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_mnrjc"]
-[ext_resource type="ImageTexture3D" uid="uid://cu07to3qoin76" path="res://sdf_textures/bunny_128.res" id="2_n23bp"]
-[ext_resource type="Script" uid="uid://cqommosxphppa" path="res://rendering/rendering_plane.gd" id="2_wqimk"]
+[ext_resource type="PackedScene" uid="uid://cocpy0366csk5" path="res://rendering/rendering_plane.tscn" id="1_3swqs"]
+[ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="2_w5sbp"]
+[ext_resource type="ImageTexture3D" uid="uid://cu07to3qoin76" path="res://sdf_textures/bunny_128.res" id="3_sg1s6"]
 
 [sub_resource type="Gradient" id="Gradient_n23bp"]
 offsets = PackedFloat32Array(0, 0.15560167, 0.62033194, 1)
@@ -26,14 +26,14 @@ color_ramp = SubResource("Gradient_n23bp")
 seamless = true
 seamless_blend_skirt = 0.355
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_wqimk"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5hk1t"]
 render_priority = 0
-shader = ExtResource("1_mnrjc")
-shader_parameter/max_iter = 127
+shader = ExtResource("2_w5sbp")
+shader_parameter/max_iter = 256
 shader_parameter/max_bounce = 1
-shader_parameter/collision_threshold = 0.008
-shader_parameter/normal_sample_length = 0.002
-shader_parameter/march_proportion = 0.30000001425
+shader_parameter/collision_threshold = 0.001
+shader_parameter/normal_sample_length = 0.003
+shader_parameter/march_proportion = 0.235
 shader_parameter/runaway_threshold = 8.0
 shader_parameter/fractal_iterations = 8
 shader_parameter/color_center_point = Vector3(0.705, -0.25, 0.765)
@@ -48,31 +48,19 @@ shader_parameter/portal_center = Vector3(0.765, 0.785, 0.085)
 shader_parameter/portal_offset = Vector3(0.45, 0.6, 0.2)
 shader_parameter/portal_radius = 0.235
 shader_parameter/portal_scale = 3.385
-shader_parameter/sdf_texture = ExtResource("2_n23bp")
+shader_parameter/sdf_texture = ExtResource("3_sg1s6")
 shader_parameter/light_direction = Vector3(-0.1, -1.17, 0.255)
 shader_parameter/base_smoothness = 24.585
 shader_parameter/specular_color = Color(1, 1, 1, 1)
 shader_parameter/specular_ratio = 0.2530000120175
-shader_parameter/real_shadows_enabled = false
+shader_parameter/real_shadows_enabled = true
 shader_parameter/fake_shadow_darkness = 0.6870000326325
 shader_parameter/real_shadow_darkness = 0.44800002128
 shader_parameter/shadow_absorption = Vector3(1.295, 1.1, 1)
 shader_parameter/shadow_softness = 0.5430000257925
-shader_parameter/clear_color = Color(0.0192, 0.0648, 0.08, 0)
+shader_parameter/clear_color = Color(0.019475712, 0.06422869, 0.079802014, 1)
 shader_parameter/_fov = 70.01
-shader_parameter/_cam_mat = Basis(-0.5612989, -0.18681449, 0.806253, 0, 0.97419065, 0.22572681, -0.8276132, 0.12670021, -0.5468122)
+shader_parameter/_cam_mat = Basis(-0.5198639, 0.17462215, 0.8362109, 0, 0.9788841, -0.20441596, -0.8542491, -0.10626847, -0.5088865)
 
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
-size = Vector2(16, 16)
-orientation = 2
-
-[node name="RenderingPlane" type="MeshInstance3D"]
-material_override = SubResource("ShaderMaterial_wqimk")
-cast_shadow = 0
-extra_cull_margin = 16.0
-instance_shader_parameters/_position = Vector3(0, 0, 0)
-instance_shader_parameters/_rotation = Vector3(0, 0, 0)
-instance_shader_parameters/_scale = 1.0
-mesh = SubResource("PlaneMesh_n23bp")
-script = ExtResource("2_wqimk")
+[node name="BunnyScene" unique_id=965001392 instance=ExtResource("1_3swqs")]
+material_override = SubResource("ShaderMaterial_5hk1t")

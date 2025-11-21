@@ -26,6 +26,10 @@ window/size/viewport_height=256
 window/stretch/mode="viewport"
 window/stretch/aspect="keep_height"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/sdf_converter/plugin.cfg")
+
 [rendering]
 
 shader_compiler/shader_cache/enabled=false

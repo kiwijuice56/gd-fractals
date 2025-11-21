@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://1vwnnd1xat3q"
+path="res://.godot/imported/bunny.obj-c381a62e272e01ef5a733e4be540169c.mesh"
+
+[deps]
+
+files=["res://.godot/imported/bunny.obj-c381a62e272e01ef5a733e4be540169c.mesh"]
+
+source_file="res://models/bunny.obj"
+dest_files=["res://.godot/imported/bunny.obj-c381a62e272e01ef5a733e4be540169c.mesh", "res://.godot/imported/bunny.obj-c381a62e272e01ef5a733e4be540169c.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
