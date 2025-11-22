@@ -188,10 +188,8 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 
 // NOTE:
 // You should set up this DE to contain the object you want in your scene;
-// Set the collider_id and collision_info (extra) to pass back into the main
-// fragment shader, where you can then use that information to set the color/material;
-// This example doesn't use that information and instead assumes the fractal is one 
-// uniform object
+// You can use collision_info as extraneous data to pass back into the main
+// fragment shader; Right now, this is used for extra color information.
 float world_DE(vec3 p, inout vec3 collision_info) {
 	// example: a mesh fractal merged with a mandelbulb fractal
 	

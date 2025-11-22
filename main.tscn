@@ -1,8 +1,7 @@
-[gd_scene load_steps=12 format=3 uid="uid://bmmi6fbli5q4t"]
+[gd_scene load_steps=10 format=3 uid="uid://bmmi6fbli5q4t"]
 
-[ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://free_look_camera.gd" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://camera/free_look_camera.gd" id="2_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://examples/bird/bird.tscn" id="3_1bvp3"]
-[ext_resource type="Shader" uid="uid://txdiegqab6us" path="res://dither.gdshader" id="3_h2yge"]
 [ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://examples/bunny/bunny.tscn" id="3_lquwl"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
@@ -14,9 +13,9 @@ sky_material = SubResource("ProceduralSkyMaterial_0xm2m")
 background_mode = 2
 sky = SubResource("Sky_h2yge")
 volumetric_fog_enabled = true
-volumetric_fog_density = 0.3
-volumetric_fog_albedo = Color(0.65, 0.50049996, 0.5279083, 1)
-volumetric_fog_emission = Color(0.23, 0.1472, 0.19273998, 1)
+volumetric_fog_density = 0.2
+volumetric_fog_albedo = Color(0.65, 0.598, 0.60753334, 1)
+volumetric_fog_emission = Color(0.23, 0.1886, 0.21136999, 1)
 volumetric_fog_anisotropy = 0.74
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1bvp3"]
@@ -26,15 +25,10 @@ albedo_color = Color(0.34, 0.2516, 0.26928002, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_0xm2m"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1bvp3"]
-shader = ExtResource("3_h2yge")
-shader_parameter/resolution_downsampling = 1.0
-shader_parameter/bit_depth = 14.0
-
 [node name="Main" type="Node" unique_id=1500513351]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=904793790]
-transform = Transform3D(1, 0, 0, 0, -0.50000006, 0.8660254, 0, -0.8660254, -0.50000006, 0, 1, 0)
+transform = Transform3D(1, 0, 0, 0, -0.50000006, 0.8660254, 0, -0.8660254, -0.50000006, 0, 2, -1.2)
 light_energy = 0.2
 light_volumetric_fog_energy = 2.0
 shadow_enabled = true
@@ -52,7 +46,7 @@ sensitivity = 0.2
 transform = Transform3D(0.7880831, 0, 0.39999998, 0, 0.99999994, 0, -0.45499998, 0, 0.69282025, 0, 0.5, 0)
 
 [node name="Bunny" parent="." unique_id=965001392 instance=ExtResource("3_lquwl")]
-transform = Transform3D(-0.8660254, 0, 0.50000006, 0, 1, 0, -0.50000006, 0, -0.8660254, -0.8000001, 0.8, -1.6)
+transform = Transform3D(1.9696156, 0, 0.34729636, 0, 2, 0, -0.34729636, 0, 1.9696156, -1.2, 1.7, 1)
 
 [node name="Setting" type="Node3D" parent="." unique_id=1770848609]
 
@@ -70,12 +64,3 @@ mesh = SubResource("BoxMesh_0xm2m")
 transform = Transform3D(0.86602545, 0, 0.5, 0, 1, 0, -0.5, 0, 0.86602545, 0.9, 5.9604645e-08, -1.4244003)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
-
-[node name="Dither" type="ColorRect" parent="." unique_id=1953038721]
-visible = false
-material = SubResource("ShaderMaterial_1bvp3")
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
