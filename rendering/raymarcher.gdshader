@@ -7,9 +7,10 @@ const float SMOOTH_UNION_MULTIPLIER = 4.0; // See smooth_union(...)
 const float BOUNCE_EPSILON_MULTIPLIER = 4.0; // Controls how far a ray should move away from a surface to prevent artifacts during shadows/bounces
 const float SHADOW_EPSILON_MULTIPLIER = 4.0;
 const float DR_MIX = 0.3;
+const int SUB_RAY_DIVIDER = 3;
 
 group_uniforms raymarching;
-uniform int max_iterations = 256; // Max iterations any ray can march
+uniform int primary_max_iterations = 128; // Max iterations any ray can march
 uniform int max_bounces = 1; // Max times a ray can be reflected
 uniform float collision_threshold = 0.015; // Min distance a ray can be from a surface for it to collide
 uniform float normal_sample_length = 0.015; // How far along a collided surface to move when sampling for a normal
@@ -85,7 +86,7 @@ void vertex() {
 		MAIN_CAM_INV_VIEW_MATRIX[2],
 		MODEL_MATRIX[3]);
 	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
-	VERTEX.xy *= 32.0; // Multiplier to cover entire screen
+	VERTEX.xy *= 4.0; // Multiplier to cover entire screen
 }
 
 // Combines distances of two shapes (OR)
@@ -280,7 +281,7 @@ float world_DE(vec3 p, inout vec3 collision_info) {
 }
 
 // Advances a ray along the world distance estimate
-int march(inout vec3 ray_pos, vec3 ray_dir, inout vec3 collision_info) {
+int march(int max_iterations, inout vec3 ray_pos, vec3 ray_dir, inout vec3 collision_info) {
 	int iter = 0;
 	for (; iter < max_iterations; iter++) {
 		float dist = abs(world_DE(ray_pos, collision_info));
@@ -335,9 +336,9 @@ void fragment() {
 		float previous_reflectance = 1.0;
 		for (int i = 0; i < max_bounces; i++) {
 			vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
-			int iter = march(ray_pos, ray_dir, collision_info);
+			int iter = march(primary_max_iterations, ray_pos, ray_dir, collision_info);
 			
-			if (iter == max_iterations) {
+			if (iter == primary_max_iterations) {
 				pixel_color += clear_color * previous_reflectance;
 				break;
 			}
@@ -349,10 +350,10 @@ void fragment() {
 			if (real_shadows_enabled) {
 				vec3 old_ray = ray_pos;
 				vec3 garbage_ = vec3(1.0, MAX_DISTANCE, 0.0);
-				vec3 corrected_light_direction =  normalize(inverse(MODEL_MATRIX) * vec4(light_direction, 0.0)).xyz;
+				vec3 corrected_light_direction = normalize(inverse(MODEL_MATRIX) * vec4(light_direction, 0.0)).xyz;
 				ray_pos -= corrected_light_direction * collision_threshold * SHADOW_EPSILON_MULTIPLIER;
-				int shadow_iter = march(ray_pos, -corrected_light_direction, garbage_);
-				shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(max_iterations), 0.5);
+				int shadow_iter = march(primary_max_iterations / SUB_RAY_DIVIDER, ray_pos, -corrected_light_direction, garbage_);
+				shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(primary_max_iterations / SUB_RAY_DIVIDER), 0.5);
 				ray_pos = old_ray;
 			}
 			
@@ -365,7 +366,7 @@ void fragment() {
 			vec4 hit_color = fractal_color_1 * fractal_mix + fractal_color_2 * (1.0 - fractal_mix);
 			
 			// Ambient occlusion
-			float aa = float(iter) / float(max_iterations);
+			float aa = float(iter) / float(primary_max_iterations);
 			hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
 			
 			// Shadows based on normal only

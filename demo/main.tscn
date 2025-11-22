@@ -24,19 +24,19 @@ albedo_color = Color(0.34, 0.2516, 0.26928002, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_0xm2m"]
 
-[node name="Main" type="Node" unique_id=1500513351]
+[node name="Main" type="Node"]
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=904793790]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -0.50000006, 0.8660254, 0, -0.8660254, -0.50000006, 0, 2, -1.2)
 light_energy = 0.2
 light_volumetric_fog_energy = 2.0
 shadow_enabled = true
 shadow_blur = 2.0
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=269938194]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_0xm2m")
 
-[node name="FreeLookCamera" type="Camera3D" parent="." unique_id=1986274605]
+[node name="FreeLookCamera" type="Camera3D" parent="."]
 transform = Transform3D(-4.3545054e-08, -0.08715574, 0.9961947, -3.8096983e-09, 0.9961947, 0.08715574, -1, -4.440892e-16, -4.371139e-08, 1.6558222, 0.6141418, 0.15462565)
 visible = false
 fov = 96.5
@@ -49,19 +49,19 @@ transform = Transform3D(0.7880831, 0, 0.39999998, 0, 0.99999994, 0, -0.45499998,
 [node name="Bunny" parent="." unique_id=965001392 instance=ExtResource("3_w7hkg")]
 transform = Transform3D(1.8704777, 0.6265265, 0.32981563, -0.6170082, 1.8993326, -0.10879518, -0.34729633, -4.4530006e-09, 1.9696156, -1.2, 1.3000001, 1.2)
 
-[node name="Setting" type="Node3D" parent="." unique_id=1770848609]
+[node name="Setting" type="Node3D" parent="."]
 
-[node name="Floor" type="MeshInstance3D" parent="Setting" unique_id=905927767]
+[node name="Floor" type="MeshInstance3D" parent="Setting"]
 transform = Transform3D(50, 0, 0, 0, 1, 0, 0, 0, 50, 0, -0.29999995, 0)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("PlaneMesh_0xm2m")
 
-[node name="Cube" type="MeshInstance3D" parent="Setting" unique_id=314887289]
+[node name="Cube" type="MeshInstance3D" parent="Setting"]
 transform = Transform3D(0.9659258, 0, -0.25881904, 0, 1, 0, 0.25881904, 0, 0.9659258, -0.98047996, -0.49999994, 1.4490607)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
 
-[node name="Cube2" type="MeshInstance3D" parent="Setting" unique_id=567787676]
+[node name="Cube2" type="MeshInstance3D" parent="Setting"]
 transform = Transform3D(0.86602545, 0, 0.5, 0, 1, 0, -0.5, 0, 0.86602545, 0.9, 5.9604645e-08, -1.4244003)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
