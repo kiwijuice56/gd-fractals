@@ -103,7 +103,6 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 		theta = theta * mandelbulb_power;
 		phi = phi * mandelbulb_power;
 		x = p + pow(r, mandelbulb_power) * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
-
 		collision_info.r = min(collision_info.r, length(x - color_center_point));
 	}
 	collision_info.r *= color_balance;
@@ -154,15 +153,16 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 		} else {
 			vec3 D = normalize(texture(noise, fractal_animation_amount * sin(vec3(0.2, 0.3, 0.2) * TIME) + noise_frequency * x.xyz).rgb);
 			vec3 _garbage;
-			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + beta + 0.01 * sin(TIME) - 0.01));
+			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + beta + fractal_animation_amount *  0.01 * sin(TIME) - 0.01));
+			vec3 x_prev = x.xyz;
 			x.xyz = D * R;
-			dr = alpha * R * dr + 1.0;
-			collision_info.r += 32.0 * R * D.x;
+			float dr_scale = alpha * R * (1.0 + noise_frequency);
+			dr = dr * dr_scale;
+			dr = mix(dr, sqrt(dr), 0.3);  
+			collision_info.r += 4.0 * exp(D.x);
 		}
 	}
-
-	collision_info.r *= color_balance;
-	return 0.5 * r * log(r) / dr;
+	return  r / dr;
 }
 
 float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
@@ -176,14 +176,14 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 	for (; iter < max_iterations; iter++) {
 		float dist = abs(world_DE(ray_pos, id, collision_info));
 		collision_info.g = min(collision_info.g, dist);
-
+		
 		ray_pos += ray_dir * dist * march_proportion;
-
+		
 		if (dist > runaway_threshold) {
 			iter = max_iterations;
 			break;
 		}
-
+		
 		if (dist < collision_threshold) {
 			break;
 		}
@@ -233,10 +233,10 @@ void fragment() {
 	ray_dir = (INV_VIEW_MATRIX * vec4(normalize(ray_dir), 0.0)).xyz;
 	ray_dir = normalize(inverse(MODEL_MATRIX) * vec4(ray_dir, 0.0)).xyz;
 	ray_pos = (inverse(MODEL_MATRIX) * vec4(ray_pos, 1.0)).xyz;
-
+	
 	float t = intersect_sphere(ray_pos, ray_dir, bounding_radius);
 	bool inside_bound = length(ray_pos) < bounding_radius;
-
+	
 	if (inside_bound || t > 0.0) {
 		// Project to outside of bounding sphere to reduce wasted marches far away
 		if (!inside_bound) {

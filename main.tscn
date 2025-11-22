@@ -1,8 +1,8 @@
 [gd_scene load_steps=12 format=3 uid="uid://bmmi6fbli5q4t"]
 
 [ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://free_look_camera.gd" id="2_0xm2m"]
-[ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://examples/bunny_scene.tscn" id="2_h2yge"]
-[ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://examples/bird_scene.tscn" id="3_1bvp3"]
+[ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://examples/bunny/bunny.tscn" id="2_h2yge"]
+[ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://examples/bird/bird.tscn" id="3_1bvp3"]
 [ext_resource type="Shader" uid="uid://txdiegqab6us" path="res://dither.gdshader" id="3_h2yge"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
@@ -46,6 +46,7 @@ sensitivity = 0.2
 
 [node name="BunnyScene" parent="." unique_id=965001392 instance=ExtResource("2_h2yge")]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -1.9, 0.5, -0.90000004)
+visible = false
 
 [node name="BirdScene" parent="." unique_id=2124899352 instance=ExtResource("3_1bvp3")]
 transform = Transform3D(0.7880831, 0, 0.39999998, 0, 0.99999994, 0, -0.45499998, 0, 0.69282025, 0, 0.5, 0)
@@ -68,7 +69,6 @@ material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
 
 [node name="Dither" type="ColorRect" parent="." unique_id=1953038721]
-visible = false
 material = SubResource("ShaderMaterial_1bvp3")
 anchors_preset = 15
 anchor_right = 1.0
