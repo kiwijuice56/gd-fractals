@@ -23,6 +23,10 @@ uniform vec4 fractal_color_1: source_color = vec4(0.6, 0.0, 0.5, 1.0);
 uniform vec4 fractal_color_2: source_color = vec4(0.0, 0.3, 0.2, 1.0);
 uniform float animation_speed = 1.0;
 uniform float animation_intensity = 0.3; // Strength of the animations
+uniform vec3 secondary_fractal_offset = vec3(-1.2, 0.0, 0.0);
+uniform vec3 secondary_fractal_scale = vec3(0.333, 0.25, 0.333);
+uniform float secondary_fractal_blend_smoothness = 0.1;
+uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge") = 0;
 
 group_uniforms mandelbulb;
 uniform float mandelbulb_power = 8.0;
@@ -30,9 +34,15 @@ uniform float mandelbulb_runaway_threshold = 2.0;
 uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5); // Color parameters for fractal algorithms
 uniform float color_balance: hint_range(0.0, 1.0) = 0.5; // Sliding scale for the two fractal colors (mandelbulb only)
 
+group_uniforms mandebox;
+uniform float mandelbox_scale = 3.0;
+
 group_uniforms julia;
 uniform vec4 julia_center = vec4(0.0, -0.3, 0.3, -0.6);
 uniform float julia_runaway_threshold = 2.0;
+
+group_uniforms sierpinski;
+uniform float sierpinski_scale = 1.1;
 
 group_uniforms shape_modulus;
 uniform float color_frequency = 4.0;
@@ -68,15 +78,15 @@ group_uniforms scene;
 uniform vec4 clear_color: source_color;
 
 void vertex() {
-	// Make the rendering plane a billboard
-	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(
-			MAIN_CAM_INV_VIEW_MATRIX[0],
-			MAIN_CAM_INV_VIEW_MATRIX[1],
-			MAIN_CAM_INV_VIEW_MATRIX[2],
-			MODEL_MATRIX[3]);
+    // Billboard
+		MODELVIEW_MATRIX = VIEW_MATRIX * mat4(
+		MAIN_CAM_INV_VIEW_MATRIX[0],
+		MAIN_CAM_INV_VIEW_MATRIX[1],
+		MAIN_CAM_INV_VIEW_MATRIX[2],
+		MODEL_MATRIX[3]);
 	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
+	VERTEX.xy *= 32.0; // Multiplier to cover entire screen
 }
-
 
 // Combines distances of two shapes (OR)
 // https://iquilezles.org/articles/distfunctions/
@@ -105,6 +115,63 @@ float intersect_sphere(vec3 ray_pos, vec3 ray_dir, float radius) {
 	return -b - sqrt(h);
 }
 
+void sphere_fold(inout vec3 p, inout float dz) {
+	float r2 = max(0.25, p.x * p.x + p.y * p.y + p.z * p.z);
+	if (r2 < 0.5) {
+		p *= 0.5 / r2;
+		dz *= 0.5 / r2;
+	}
+}
+
+void box_fold(inout vec3 p) {
+	p = clamp(p, -0.5, 0.5) * 2.0 - p;
+}
+
+// http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/
+float mandelbox_DE(vec3 p, inout vec3 collision_info) {
+	float dz = 1.0;
+	vec3 original = p;
+	float scale = sin(TIME * animation_speed) * animation_intensity * mandelbox_scale + mandelbox_scale * 2.0;
+	for (int i = 0; i < 10; i++) {
+		box_fold(p);
+		sphere_fold(p, dz);
+		p = p * scale + original;
+		dz = dz * scale + 1.0;
+	}
+	return length(p) / dz;
+}
+
+// http://blog.hvidtfeldts.net/index.php/2011/08/distance-estimated-3d-fractals-iii-folding-space/
+float tetrahedron_DE(vec3 p, inout vec3 collision_info) {
+	vec3 offset = vec3(1.0);
+	float scale = sierpinski_scale + sin(TIME * animation_speed) * animation_intensity * 0.1; 
+	for (int i = 0; i < fractal_iterations; i++) {
+		if(p.x + p.y < 0.0) p.xy = -p.yx; // fold 1
+		if(p.x + p.z < 0.0) p.xz = -p.zx; // fold 2
+		if(p.y + p.z < 0.0) p.zy = -p.yz; // fold 3
+		p = p * scale - offset * (scale - 1.0);
+	}
+	return length(p) * pow(scale, -16.0);
+}
+
+// http://www.fractalforums.com/ifs-iterated-function-systems/revenge-of-the-half-eaten-menger-sponge/15/
+float mengersponge_DE(vec3 p, inout vec3 collision_info) { // by recursively digging a box
+	// Center the fractal
+	p = p * 0.5 + 0.5;
+	vec3 q = abs(p - 0.5) - 0.5;
+	float d1 = max(q.x, max(q.y, q.z)); // distance to the box
+	float d = d1; // current computed distance
+	float scale = 1.0 ;
+	for (int i = 0; i < fractal_iterations; i++) {
+		vec3 pa = mod(p * 3.0 * scale, 3.0);
+		scale *= 3.0;
+		q = vec3(0.5) - abs(pa - 1.5);
+		d1 = min(max(q.x, q.z), min(max(q.x, q.y), max(q.y, q.z))) / scale; //distance inside the 3 axis-aligned square tubes
+		d = max(d, d1); //intersection
+	}
+	return d;
+}
+
 // Distance estimate for a mandelbulb fractal
 // http://blog.hvidtfeldts.net/index.php/2011/09/distance-estimated-3d-fractals-v-the-mandelbulb-different-de-approximations/
 // https://iquilezles.org/articles/ftrapsgeometric/
@@ -131,9 +198,9 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	return 0.5 * log(r) * r / dr;
 }
 
-// Distance estimate for a 3D julia fractal
 float julia_DE(vec3 p, inout vec3 collision_info) {
-	vec4 x = vec4(p.x, p.z, 0.0, p.y); // This ordering is arbitrary
+	vec4 x = vec4(p.x, p.z, p.y, p.x + p.z); // This ordering is arbitrary
+	vec4 center = julia_center + vec4(sin(TIME * animation_speed)) * animation_intensity;
 	float r = 0.0;
 	float dr = 1.0;
 	
@@ -145,7 +212,7 @@ float julia_DE(vec3 p, inout vec3 collision_info) {
 		dr = 2.0 * r * dr + 1.0;
 		
 		// Quaternion multiplication
-		x = julia_center + vec4(
+		x = center + vec4(
 			pow(x.w, 2) - pow(x.x, 2) - pow(x.y, 2) - pow(x.z, 2),
 			2.0 * x.w * x.x,
 			2.0 * x.w * x.y,
@@ -199,9 +266,17 @@ float world_DE(vec3 p, inout vec3 collision_info) {
 	
 	// Collision info is updated here, and distance is calculated
 	float mesh_dist = mesh_fractal_DE(p, collision_info);
-	float mandel_dist = mandelbulb_DE(vec3(3.0, 4.0, 4.0) * p - vec3(-1.2, 0.0, 0.0), garbage_);
+	float secondary_fractal_dist = MAX_DISTANCE;
 	
-	return smooth_union(mesh_dist, mandel_dist, 0.15);
+	switch (secondary_fractal_option) {
+		case 0: secondary_fractal_dist = mandelbulb_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 1: secondary_fractal_dist = mandelbox_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 2: secondary_fractal_dist = julia_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 3: secondary_fractal_dist = tetrahedron_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 4: secondary_fractal_dist = mengersponge_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+	}
+	
+	return smooth_union(mesh_dist, secondary_fractal_dist, secondary_fractal_blend_smoothness);
 }
 
 // Advances a ray along the world distance estimate

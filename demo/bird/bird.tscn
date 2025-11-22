@@ -4,7 +4,6 @@
 [ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/bird/bird.gd" id="3_jkuj8"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
-size = Vector2(4, 4)
 orientation = 2
 
 [sub_resource type="SphereMesh" id="SphereMesh_pefpt"]
