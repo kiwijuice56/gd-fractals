@@ -31,11 +31,11 @@ seamless_blend_skirt = 0.355
 [resource]
 render_priority = 0
 shader = ExtResource("1_vx6m2")
-shader_parameter/primary_max_iterations = 32
+shader_parameter/primary_max_iterations = 35
 shader_parameter/max_bounces = 1
 shader_parameter/collision_threshold = 0.03
-shader_parameter/normal_sample_length = 0.015
-shader_parameter/march_proportion = 0.50000002375
+shader_parameter/normal_sample_length = 0.006
+shader_parameter/march_proportion = 0.65600003116
 shader_parameter/runaway_threshold = 5.0
 shader_parameter/bounding_radius = 1.1
 shader_parameter/fractal_iterations = 4

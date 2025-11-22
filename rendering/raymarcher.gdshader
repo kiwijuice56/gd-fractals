@@ -8,6 +8,7 @@ const float BOUNCE_EPSILON_MULTIPLIER = 4.0; // Controls how far a ray should mo
 const float SHADOW_EPSILON_MULTIPLIER = 4.0;
 const float DR_MIX = 0.3;
 const int SUB_RAY_DIVIDER = 3;
+const float PLANE_SCALE = 4.0;
 
 group_uniforms raymarching;
 uniform int primary_max_iterations = 128; // Max iterations any ray can march
@@ -86,7 +87,7 @@ void vertex() {
 		MAIN_CAM_INV_VIEW_MATRIX[2],
 		MODEL_MATRIX[3]);
 	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
-	VERTEX.xy *= 4.0; // Multiplier to cover entire screen
+	VERTEX.xy *= PLANE_SCALE; // Multiplier to cover entire screen
 }
 
 // Combines distances of two shapes (OR)
@@ -103,16 +104,16 @@ float smooth_intersection(float d1, float d2, float k) {
 	return -smooth_union(-d1, -d2, k);
 }
 
-// Returns the time value that a ray intersects with a sphere 
+// Returns the time value that a ray intersects with a sphere
 float intersect_sphere(vec3 ray_pos, vec3 ray_dir, float radius) {
 	float b = dot(ray_pos, ray_dir);
 	float c = dot(ray_pos, ray_pos) - radius * radius;
 	float h = b * b - c;
-	
+
 	if (h < 0.0) {
 		return -1.0;
 	}
-	
+
 	return -b - sqrt(h);
 }
 
@@ -145,7 +146,7 @@ float mandelbox_DE(vec3 p, inout vec3 collision_info) {
 // http://blog.hvidtfeldts.net/index.php/2011/08/distance-estimated-3d-fractals-iii-folding-space/
 float tetrahedron_DE(vec3 p, inout vec3 collision_info) {
 	vec3 offset = vec3(1.0);
-	float scale = sierpinski_scale + sin(TIME * animation_speed) * animation_intensity * 0.1; 
+	float scale = sierpinski_scale + sin(TIME * animation_speed) * animation_intensity * 0.1;
 	for (int i = 0; i < fractal_iterations; i++) {
 		if(p.x + p.y < 0.0) p.xy = -p.yx; // fold 1
 		if(p.x + p.z < 0.0) p.xz = -p.zx; // fold 2
@@ -187,7 +188,7 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 			break;
 		}
 		dr = pow(r, animated_power - 1.0) * animated_power * dr;
-		
+
 		float theta = acos(x.z / r);
 		float phi = atan(x.y, x.x);
 		theta = theta * animated_power;
@@ -204,14 +205,14 @@ float julia_DE(vec3 p, inout vec3 collision_info) {
 	vec4 center = julia_center + vec4(sin(TIME * animation_speed)) * animation_intensity;
 	float r = 0.0;
 	float dr = 1.0;
-	
+
 	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(x);
 		if (r > julia_runaway_threshold) {
 			break;
 		}
 		dr = 2.0 * r * dr + 1.0;
-		
+
 		// Quaternion multiplication
 		x = center + vec4(
 			pow(x.w, 2) - pow(x.x, 2) - pow(x.y, 2) - pow(x.z, 2),
@@ -233,7 +234,7 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	vec4 x = vec4(p + vec3(0.5), 0.0);
 	float r = 0.0;
 	float dr = 1.0;
-	
+
 	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(x);
 		float dist_to_portal_1 = length(x.xyz - portal_center_1);
@@ -260,15 +261,15 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 // fragment shader; Right now, this is used for extra color information.
 float world_DE(vec3 p, inout vec3 collision_info) {
 	// example: a mesh fractal merged with a mandelbulb fractal
-	
+
 	// Collision info inputs
 	collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 	vec3 garbage_; // Need to pass an info variable into the mandelbulb, but we discard the results
-	
+
 	// Collision info is updated here, and distance is calculated
 	float mesh_dist = mesh_fractal_DE(p, collision_info);
 	float secondary_fractal_dist = MAX_DISTANCE;
-	
+
 	switch (secondary_fractal_option) {
 		case 0: secondary_fractal_dist = mandelbulb_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 		case 1: secondary_fractal_dist = mandelbox_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
@@ -276,7 +277,7 @@ float world_DE(vec3 p, inout vec3 collision_info) {
 		case 3: secondary_fractal_dist = tetrahedron_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 		case 4: secondary_fractal_dist = mengersponge_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 	}
-	
+
 	return smooth_union(mesh_dist, secondary_fractal_dist, secondary_fractal_blend_smoothness);
 }
 
@@ -285,14 +286,14 @@ int march(int max_iterations, inout vec3 ray_pos, vec3 ray_dir, inout vec3 colli
 	int iter = 0;
 	for (; iter < max_iterations; iter++) {
 		float dist = abs(world_DE(ray_pos, collision_info));
-		
+
 		ray_pos += ray_dir * dist * march_proportion;
-		
+
 		if (dist > runaway_threshold) {
 			iter = max_iterations;
 			break;
 		}
-		
+
 		if (dist < collision_threshold) {
 			break;
 		}
@@ -321,30 +322,30 @@ void fragment() {
 	ray_dir = (INV_VIEW_MATRIX * vec4(normalize(ray_dir), 0.0)).xyz;
 	ray_dir = normalize(inverse(MODEL_MATRIX) * vec4(ray_dir, 0.0)).xyz;
 	ray_pos = (inverse(MODEL_MATRIX) * vec4(ray_pos, 1.0)).xyz;
-	
+
 	float t = intersect_sphere(ray_pos, ray_dir, bounding_radius);
 	bool inside_bound = length(ray_pos) < bounding_radius;
-	
+
 	if (inside_bound || t > 0.0) {
 		// Project to outside of bounding sphere to reduce wasted marches far away
 		if (!inside_bound) {
 			ray_pos = ray_pos + ray_dir * t;
 		}
-		
+
 		// March through scene, bouncing at collisions to create reflections
 		vec4 pixel_color = vec4(0.0);
 		float previous_reflectance = 1.0;
 		for (int i = 0; i < max_bounces; i++) {
 			vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 			int iter = march(primary_max_iterations, ray_pos, ray_dir, collision_info);
-			
+
 			if (iter == primary_max_iterations) {
 				pixel_color += clear_color * previous_reflectance;
 				break;
 			}
-			
+
 			vec3 normal = get_normal(ray_pos);
-			
+
 			// Shadow raymarching
 			float shadow_occlusion = 1.0;
 			if (real_shadows_enabled) {
@@ -356,32 +357,32 @@ void fragment() {
 				shadow_occlusion = (1.0 - real_shadow_darkness) + real_shadow_darkness * pow(float(shadow_iter) / float(primary_max_iterations / SUB_RAY_DIVIDER), 0.5);
 				ray_pos = old_ray;
 			}
-			
+
 			// Reflect the ray for future bounces
 			ray_dir = ray_dir - 2.0 * dot(ray_dir, normal) * normal;
 			ray_pos += ray_dir * collision_threshold * BOUNCE_EPSILON_MULTIPLIER;
-			
-			// Albedo 
+
+			// Albedo
 			float fractal_mix = 0.5 + 0.5 * sin(collision_info.r); // Kinda hacky
 			vec4 hit_color = fractal_color_1 * fractal_mix + fractal_color_2 * (1.0 - fractal_mix);
-			
+
 			// Ambient occlusion
 			float aa = float(iter) / float(primary_max_iterations);
 			hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
-			
+
 			// Shadows based on normal only
 			vec3 corrected_light_direction =  normalize(inverse(MODEL_MATRIX) * vec4(light_direction, 0.0)).xyz;
 			float normal_shadow = ((1.0 - fake_shadow_darkness) + fake_shadow_darkness * pow(max(0.0, specular_ratio * dot(normal, -normalize(corrected_light_direction))), shadow_softness));
 			hit_color *= vec4(pow(normal_shadow, shadow_absorption.r), pow(normal_shadow, shadow_absorption.g), normal_shadow, shadow_absorption.b);
-			
+
 			// Shadows based on geometry
 			hit_color *= vec4(pow(shadow_occlusion, shadow_absorption.r), pow(shadow_occlusion, shadow_absorption.g), shadow_occlusion, shadow_absorption.b);
-			
+
 			// Specular highlights
 			float specular = clamp(dot(-normalize(light_direction), ray_dir), 0.0, 1.0);
 			float specular_power = pow(smoothness, 2.0);
 			hit_color += specular_ratio * vec4(specular_color.rgb, 1.0) * pow(specular, specular_power);
-			
+
 			// Mix reflections
 			pixel_color += hit_color * previous_reflectance;
 			previous_reflectance = reflectivity;
