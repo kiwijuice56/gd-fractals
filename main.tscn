@@ -1,7 +1,6 @@
-[gd_scene load_steps=12 format=3 uid="uid://bmmi6fbli5q4t"]
+[gd_scene load_steps=11 format=3 uid="uid://bmmi6fbli5q4t"]
 
 [ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://free_look_camera.gd" id="2_0xm2m"]
-[ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://examples/bunny/bunny.tscn" id="2_h2yge"]
 [ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://examples/bird/bird.tscn" id="3_1bvp3"]
 [ext_resource type="Shader" uid="uid://txdiegqab6us" path="res://dither.gdshader" id="3_h2yge"]
 
@@ -15,9 +14,12 @@ background_mode = 2
 sky = SubResource("Sky_h2yge")
 volumetric_fog_enabled = true
 volumetric_fog_density = 0.3
-volumetric_fog_albedo = Color(0.9547927, 0.9026788, 0.9360225, 1)
+volumetric_fog_albedo = Color(0.65, 0.50049996, 0.5279083, 1)
+volumetric_fog_emission = Color(0.23, 0.1472, 0.19273998, 1)
+volumetric_fog_anisotropy = 0.74
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1bvp3"]
+albedo_color = Color(0.34, 0.2516, 0.26928002, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_0xm2m"]
 
@@ -33,6 +35,7 @@ shader_parameter/bit_depth = 14.0
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=904793790]
 transform = Transform3D(1, 0, 0, 0, -0.50000006, 0.8660254, 0, -0.8660254, -0.50000006, 0, 1, 0)
 light_energy = 0.2
+light_volumetric_fog_energy = 2.0
 shadow_enabled = true
 shadow_blur = 2.0
 
@@ -43,10 +46,6 @@ environment = SubResource("Environment_0xm2m")
 transform = Transform3D(-4.3545054e-08, -0.08715574, 0.9961947, -3.8096983e-09, 0.9961947, 0.08715574, -1, -4.440892e-16, -4.371139e-08, 1.6558222, 0.6141418, 0.15462565)
 script = ExtResource("2_0xm2m")
 sensitivity = 0.2
-
-[node name="BunnyScene" parent="." unique_id=965001392 instance=ExtResource("2_h2yge")]
-transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -1.9, 0.5, -0.90000004)
-visible = false
 
 [node name="BirdScene" parent="." unique_id=2124899352 instance=ExtResource("3_1bvp3")]
 transform = Transform3D(0.7880831, 0, 0.39999998, 0, 0.99999994, 0, -0.45499998, 0, 0.69282025, 0, 0.5, 0)
@@ -69,6 +68,7 @@ material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
 
 [node name="Dither" type="ColorRect" parent="." unique_id=1953038721]
+visible = false
 material = SubResource("ShaderMaterial_1bvp3")
 anchors_preset = 15
 anchor_right = 1.0

@@ -6,6 +6,7 @@ const float MAX_DISTANCE = 10000.0; // Placeholder value for infinitely far away
 const float SMOOTH_UNION_MULTIPLIER = 4.0; // See smooth_union(...)
 const float BOUNCE_EPSILON_MULTIPLIER = 4.0; // Controls how far a ray should move away from a surface to prevent artifacts during shadows/bounces
 const float SHADOW_EPSILON_MULTIPLIER = 4.0;
+const float DR_MIX = 0.3;
 
 group_uniforms raymarching;
 uniform int max_iterations = 256; // Max iterations any ray can march
@@ -21,7 +22,8 @@ uniform int fractal_iterations = 4; // Max iterations of the fractal algoritms
 uniform vec4 fractal_color_1: source_color = vec4(0.6, 0.0, 0.5, 1.0);
 uniform vec4 fractal_color_2: source_color = vec4(0.0, 0.3, 0.2, 1.0);
 uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5); // Color parameters for fractal algorithms
-uniform float color_balance: hint_range(0.0, 1.0) = 0.5; // Sliding scale for the two fractal colors
+uniform float color_balance: hint_range(0.0, 1.0) = 0.5; // Sliding scale for the two fractal colors (mandelbulb only)
+uniform float color_frequency = 4.0;
 uniform float fractal_animation_amount = 0.3;
 
 group_uniforms mandelbulb;
@@ -33,10 +35,10 @@ uniform float alpha = 3.15; // "cutoff" value of the fractal
 uniform float beta = -0.135; // "thickness" of fractal surface
 uniform sampler3D noise: repeat_enable, filter_linear; // Used to give surface fractal-like detail
 uniform float noise_frequency = 2.0;
-uniform vec3 portal_center = vec3(0.5, 0.6, 0.0); // Position of the portal
-uniform vec3 portal_offset = vec3(0.45, 0.6, 0.2); // Position that the portal should teleport to
-uniform float portal_radius = 0.3;
-uniform float portal_scale = 4.0;
+uniform vec3 portal_center_1 = vec3(0.5, 0.6, 0.0); // Position of the portal
+uniform vec3 portal_offset_1 = vec3(0.45, 0.6, 0.2); // Position that the portal should teleport to
+uniform float portal_radius_1 = 0.3;
+uniform float portal_scale_1 = 4.0;
 
 group_uniforms mesh;
 uniform sampler3D sdf_texture: repeat_disable, filter_linear; // Signed distance function
@@ -89,20 +91,20 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 	vec3 x = p;
 	float r = 0.0;
 	float dr = 1.0;
-
+	float animated_power = mandelbulb_power + sin(TIME) * 1.0;
 	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(x);
 		if (r > mandelbulb_runaway_threshold) {
 			break;
 		}
-		dr = pow(r, mandelbulb_power - 1.0) * mandelbulb_power * dr;
+		dr = pow(r, animated_power - 1.0) * animated_power * dr;
 
 		// Mandelbulb folding
 		float theta = acos(x.z / r);
 		float phi = atan(x.y, x.x);
-		theta = theta * mandelbulb_power;
-		phi = phi * mandelbulb_power;
-		x = p + pow(r, mandelbulb_power) * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
+		theta = theta * animated_power;
+		phi = phi * animated_power;
+		x = p + pow(r, animated_power) * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
 		collision_info.r = min(collision_info.r, length(x - color_center_point));
 	}
 	collision_info.r *= color_balance;
@@ -145,30 +147,44 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 
 	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(x);
-
-		float dist_to_portal = length(x.xyz - portal_center);
-		if (dist_to_portal < portal_radius) {
-			x.xyz = dist_to_portal * normalize(x.xyz - portal_center) * portal_scale + portal_offset;
-			dr *= portal_scale;
+		float dist_to_portal_1 = length(x.xyz - portal_center_1);
+		if (dist_to_portal_1 <= portal_radius_1) {
+			x.xyz = dist_to_portal_1 * normalize(x.xyz - portal_center_1) * portal_scale_1 + portal_offset_1;
+			dr *= portal_scale_1;
 		} else {
 			vec3 D = normalize(texture(noise, fractal_animation_amount * sin(vec3(0.2, 0.3, 0.2) * TIME) + noise_frequency * x.xyz).rgb);
 			vec3 _garbage;
 			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + beta + fractal_animation_amount *  0.01 * sin(TIME) - 0.01));
-			vec3 x_prev = x.xyz;
 			x.xyz = D * R;
 			float dr_scale = alpha * R * (1.0 + noise_frequency);
 			dr = dr * dr_scale;
-			dr = mix(dr, sqrt(dr), 0.3);  
-			collision_info.r += 4.0 * exp(D.x);
+			dr = mix(dr, sqrt(dr), DR_MIX); // More resistant to noise
+			collision_info.r += color_frequency * exp(D.x);
 		}
 	}
 	return  r / dr;
 }
 
 float world_DE(vec3 p, inout int collider_id, inout vec3 collision_info) {
-	collider_id = 1;
-	collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
-	return mesh_fractal_DE(p, collision_info);
+
+	vec3 mesh_collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
+	vec3 mandel_collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
+
+	float mesh_dist = mesh_fractal_DE(p, mesh_collision_info);
+	float mandel_dist = mandelbulb_DE(vec3(3.0, 4.0, 4.0) * p - vec3(-1.2, 0.0, 0.0), mandel_collision_info);
+	float dist = smooth_union(mesh_dist, mandel_dist, 0.15);
+
+	if (mesh_dist < mandel_dist) {
+		collider_id = 1;
+		collision_info = mesh_collision_info;
+		return dist;
+	} else {
+		collider_id = 0;
+		collision_info = mesh_collision_info;
+		return dist;
+	}
+
+	return mesh_dist;
 }
 
 int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_info) {
@@ -176,14 +192,14 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout int id, inout vec3 collision_i
 	for (; iter < max_iterations; iter++) {
 		float dist = abs(world_DE(ray_pos, id, collision_info));
 		collision_info.g = min(collision_info.g, dist);
-		
+
 		ray_pos += ray_dir * dist * march_proportion;
-		
+
 		if (dist > runaway_threshold) {
 			iter = max_iterations;
 			break;
 		}
-		
+
 		if (dist < collision_threshold) {
 			break;
 		}
@@ -233,10 +249,10 @@ void fragment() {
 	ray_dir = (INV_VIEW_MATRIX * vec4(normalize(ray_dir), 0.0)).xyz;
 	ray_dir = normalize(inverse(MODEL_MATRIX) * vec4(ray_dir, 0.0)).xyz;
 	ray_pos = (inverse(MODEL_MATRIX) * vec4(ray_pos, 1.0)).xyz;
-	
+
 	float t = intersect_sphere(ray_pos, ray_dir, bounding_radius);
 	bool inside_bound = length(ray_pos) < bounding_radius;
-	
+
 	if (inside_bound || t > 0.0) {
 		// Project to outside of bounding sphere to reduce wasted marches far away
 		if (!inside_bound) {
