@@ -1,8 +1,8 @@
 # gd-fractals
 Dynamic 3D fractals rendered using a raymarching shader in Godot 4. Includes seamless integration with Godot's default 3D editor and a plugin to convert `.obj` meshes into signed distance function textures.
 
-![Fractal image](screenshot_1.png)
-![Editor example](screenshot_2.png)
+![Fractal image](screenshots/screenshot_1.png)
+![Editor example](screenshots/screenshot_2.png)
 
 
 # References

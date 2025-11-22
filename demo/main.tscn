@@ -1,8 +1,8 @@
 [gd_scene load_steps=10 format=3 uid="uid://bmmi6fbli5q4t"]
 
-[ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://camera/free_look_camera.gd" id="2_0xm2m"]
-[ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://examples/bird/bird.tscn" id="3_1bvp3"]
-[ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://examples/bunny/bunny.tscn" id="3_lquwl"]
+[ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://demo/free_look_camera.gd" id="1_oe2cu"]
+[ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://demo/bird/bird.tscn" id="2_pw243"]
+[ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://demo/bunny/bunny.tscn" id="3_w7hkg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
 
@@ -39,13 +39,13 @@ environment = SubResource("Environment_0xm2m")
 
 [node name="FreeLookCamera" type="Camera3D" parent="." unique_id=1986274605]
 transform = Transform3D(-4.3545054e-08, -0.08715574, 0.9961947, -3.8096983e-09, 0.9961947, 0.08715574, -1, -4.440892e-16, -4.371139e-08, 1.6558222, 0.6141418, 0.15462565)
-script = ExtResource("2_0xm2m")
+script = ExtResource("1_oe2cu")
 sensitivity = 0.2
 
-[node name="Bird" parent="." unique_id=2124899352 instance=ExtResource("3_1bvp3")]
+[node name="Bird" parent="." unique_id=2124899352 instance=ExtResource("2_pw243")]
 transform = Transform3D(0.7880831, 0, 0.39999998, 0, 0.99999994, 0, -0.45499998, 0, 0.69282025, 0, 0.5, 0)
 
-[node name="Bunny" parent="." unique_id=965001392 instance=ExtResource("3_lquwl")]
+[node name="Bunny" parent="." unique_id=965001392 instance=ExtResource("3_w7hkg")]
 transform = Transform3D(1.9696156, 0, 0.34729636, 0, 2, 0, -0.34729636, 0, 1.9696156, -1.2, 1.7, 1)
 
 [node name="Setting" type="Node3D" parent="." unique_id=1770848609]

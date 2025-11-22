@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://d4cw3m0wkykjp"]
 
-[ext_resource type="Material" uid="uid://eq687kxvpbso" path="res://examples/bird/bird_material.tres" id="1_ffvbg"]
-[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://examples/bird/bird.gd" id="3_jkuj8"]
+[ext_resource type="Material" uid="uid://eq687kxvpbso" path="res://demo/bird/bird_material.tres" id="1_ffvbg"]
+[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/bird/bird.gd" id="3_jkuj8"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(4, 4)
