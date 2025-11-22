@@ -13,7 +13,6 @@ sky_material = SubResource("ProceduralSkyMaterial_0xm2m")
 background_mode = 2
 sky = SubResource("Sky_h2yge")
 volumetric_fog_enabled = true
-volumetric_fog_density = 0.2
 volumetric_fog_albedo = Color(0.65, 0.598, 0.60753334, 1)
 volumetric_fog_emission = Color(0.23, 0.1886, 0.21136999, 1)
 volumetric_fog_anisotropy = 0.74
@@ -39,14 +38,16 @@ environment = SubResource("Environment_0xm2m")
 
 [node name="FreeLookCamera" type="Camera3D" parent="." unique_id=1986274605]
 transform = Transform3D(-4.3545054e-08, -0.08715574, 0.9961947, -3.8096983e-09, 0.9961947, 0.08715574, -1, -4.440892e-16, -4.371139e-08, 1.6558222, 0.6141418, 0.15462565)
+visible = false
+fov = 96.5
 script = ExtResource("1_oe2cu")
 sensitivity = 0.2
 
 [node name="Bird" parent="." unique_id=2124899352 instance=ExtResource("2_pw243")]
-transform = Transform3D(0.7880831, 0, 0.39999998, 0, 0.99999994, 0, -0.45499998, 0, 0.69282025, 0, 0.5, 0)
+transform = Transform3D(0.7880831, 0, 0.39999998, 0, 0.99999994, 0, -0.45499998, 0, 0.69282025, 0, 0.3, 0)
 
 [node name="Bunny" parent="." unique_id=965001392 instance=ExtResource("3_w7hkg")]
-transform = Transform3D(1.9696156, 0, 0.34729636, 0, 2, 0, -0.34729636, 0, 1.9696156, -1.2, 1.7, 1)
+transform = Transform3D(1.8704777, 0.6265265, 0.32981563, -0.6170082, 1.8993326, -0.10879518, -0.34729633, -4.4530006e-09, 1.9696156, -1.2, 1.3000001, 1.2)
 
 [node name="Setting" type="Node3D" parent="." unique_id=1770848609]
 
@@ -62,5 +63,10 @@ mesh = SubResource("BoxMesh_0xm2m")
 
 [node name="Cube2" type="MeshInstance3D" parent="Setting" unique_id=567787676]
 transform = Transform3D(0.86602545, 0, 0.5, 0, 1, 0, -0.5, 0, 0.86602545, 0.9, 5.9604645e-08, -1.4244003)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="Cube3" type="MeshInstance3D" parent="Setting" unique_id=394878967]
+transform = Transform3D(0.7660445, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.7660445, -2.1, 5.9604645e-08, -0.5244003)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")

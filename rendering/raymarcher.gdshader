@@ -313,7 +313,7 @@ void fragment() {
 	vec3 ray_pos = CAMERA_POSITION_WORLD;
 	vec2 uv = SCREEN_UV;
 	float aspect_ratio = VIEWPORT_SIZE.x / VIEWPORT_SIZE.y;
-	float fov = atan(-1.0 / PROJECTION_MATRIX[1][1]);
+	float fov = -1.0 / PROJECTION_MATRIX[1][1];
 	float px = aspect_ratio * (2.0 * uv.x - 1.0) * fov;
 	float py = (1.0 - 2.0 * uv.y) * fov;
 	vec3 ray_dir = vec3(px, py, -1);
