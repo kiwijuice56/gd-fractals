@@ -11,7 +11,7 @@ orientation = 2
 radius = 0.3
 height = 0.7
 
-[node name="Bird" type="MeshInstance3D" unique_id=573118650]
+[node name="Bird" type="MeshInstance3D"]
 transform = Transform3D(0.7865, 0, 0, 0, 0.99999994, 0, 0, 0, 0.8, 0, 0, 0)
 material_override = ExtResource("1_ffvbg")
 cast_shadow = 0
@@ -19,7 +19,7 @@ extra_cull_margin = 16.0
 mesh = SubResource("PlaneMesh_n23bp")
 script = ExtResource("3_jkuj8")
 
-[node name="ShadowCaster" type="MeshInstance3D" parent="." unique_id=11545627]
+[node name="ShadowCaster" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 cast_shadow = 3
 mesh = SubResource("SphereMesh_pefpt")

@@ -332,12 +332,16 @@ void fragment() {
 			ray_pos = ray_pos + ray_dir * t;
 		}
 
+		vec3 final_ray_pos;
+
 		// March through scene, bouncing at collisions to create reflections
 		vec4 pixel_color = vec4(0.0);
 		float previous_reflectance = 1.0;
 		for (int i = 0; i < max_bounces; i++) {
 			vec3 collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 			int iter = march(primary_max_iterations, ray_pos, ray_dir, collision_info);
+
+			if (i == 0) final_ray_pos = ray_pos;
 
 			if (iter == primary_max_iterations) {
 				pixel_color += clear_color * previous_reflectance;
@@ -389,6 +393,10 @@ void fragment() {
 		}
 		ALBEDO.rgb = clamp(pixel_color.rgb, vec3(0.0), vec3(1.0));
 		ALPHA = pixel_color.a;
+		vec3 world_hit = (MODEL_MATRIX * vec4(final_ray_pos, 1.0)).xyz;
+		vec4 view_hit = VIEW_MATRIX * vec4(world_hit, 1.0);
+		vec4 clip_pos = PROJECTION_MATRIX * view_hit;
+		DEPTH = clip_pos.z / clip_pos.w;
 	} else {
 		ALBEDO = clear_color.rgb;
 		ALPHA = clear_color.a;
