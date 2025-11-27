@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://6o8dhpy8efnd"
+path="res://.godot/imported/urchin.obj-ac3d86b3adf60fa6cc7265713e721fa6.mesh"
+
+[deps]
+
+files=["res://.godot/imported/urchin.obj-ac3d86b3adf60fa6cc7265713e721fa6.mesh"]
+
+source_file="res://models/urchin.obj"
+dest_files=["res://.godot/imported/urchin.obj-ac3d86b3adf60fa6cc7265713e721fa6.mesh", "res://.godot/imported/urchin.obj-ac3d86b3adf60fa6cc7265713e721fa6.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

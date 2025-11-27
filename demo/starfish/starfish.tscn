@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://ds1lo7wfm5lcq"]
+
+[ext_resource type="Material" uid="uid://bpsw64tsrv1ky" path="res://demo/starfish/starfish_material.tres" id="1_ektvk"]
+[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/bird/bird.gd" id="2_exo8d"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
+size = Vector2(1, 1)
+orientation = 2
+
+[sub_resource type="SphereMesh" id="SphereMesh_pefpt"]
+radius = 0.3
+height = 0.7
+
+[node name="Starfish" type="MeshInstance3D" unique_id=607117355]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.41, 0, 0, 0)
+material_override = ExtResource("1_ektvk")
+cast_shadow = 0
+extra_cull_margin = 16.0
+mesh = SubResource("PlaneMesh_n23bp")
+script = ExtResource("2_exo8d")
+
+[node name="ShadowCaster" type="MeshInstance3D" parent="." unique_id=675608963]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+cast_shadow = 3
+mesh = SubResource("SphereMesh_pefpt")

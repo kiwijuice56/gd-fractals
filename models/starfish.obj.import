@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dgpdbj5mg5qdu"
+path="res://.godot/imported/starfish.obj-a26c6539f0be4e05a080f7222943d0d9.mesh"
+
+[deps]
+
+files=["res://.godot/imported/starfish.obj-a26c6539f0be4e05a080f7222943d0d9.mesh"]
+
+source_file="res://models/starfish.obj"
+dest_files=["res://.godot/imported/starfish.obj-a26c6539f0be4e05a080f7222943d0d9.mesh", "res://.godot/imported/starfish.obj-a26c6539f0be4e05a080f7222943d0d9.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

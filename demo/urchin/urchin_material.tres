@@ -1,7 +1,7 @@
-[gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://eq687kxvpbso"]
+[gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://dp4myw4v55h3s"]
 
-[ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_vx6m2"]
-[ext_resource type="ImageTexture3D" uid="uid://dbpmvs4jbdqr" path="res://sdf_textures/bird_64.res" id="2_vo2so"]
+[ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_gh1s4"]
+[ext_resource type="ImageTexture3D" uid="uid://22q7kx6nov40" path="res://sdf_textures/urchin_64.res" id="2_gh1s4"]
 
 [sub_resource type="Gradient" id="Gradient_rmds6"]
 interpolation_color_space = 2
@@ -27,7 +27,7 @@ seamless_blend_skirt = 0.28
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_vx6m2")
+shader = ExtResource("1_gh1s4")
 shader_parameter/primary_max_iterations = 35
 shader_parameter/max_bounces = 1
 shader_parameter/collision_threshold = 0.03
@@ -36,10 +36,10 @@ shader_parameter/march_proportion = 0.65600003116
 shader_parameter/runaway_threshold = 5.0
 shader_parameter/bounding_radius = 1.1
 shader_parameter/fractal_iterations = 4
-shader_parameter/fractal_color_1 = Color(0.9280552, 0.7603155, 0.81178653, 1)
-shader_parameter/fractal_color_2 = Color(0.84, 0.5964, 0.60045993, 1)
-shader_parameter/animation_speed = 0.8
-shader_parameter/animation_intensity = 0.3
+shader_parameter/fractal_color_1 = Color(0.156, 0.3, 0.28559998, 1)
+shader_parameter/fractal_color_2 = Color(0.54, 0.37260002, 0.44793, 1)
+shader_parameter/animation_speed = 0.945
+shader_parameter/animation_intensity = 0.805
 shader_parameter/secondary_fractal_offset = Vector3(-0.444, 0, 0)
 shader_parameter/secondary_fractal_scale = Vector3(0.333, 0.25, 0.333)
 shader_parameter/secondary_fractal_blend_smoothness = 0.1
@@ -61,7 +61,7 @@ shader_parameter/portal_center_1 = Vector3(0.5, 0.855, 0.5)
 shader_parameter/portal_offset_1 = Vector3(0.5, 0.47, 0.5)
 shader_parameter/portal_radius_1 = 0.205
 shader_parameter/portal_scale_1 = 2.96
-shader_parameter/sdf_texture = ExtResource("2_vo2so")
+shader_parameter/sdf_texture = ExtResource("2_gh1s4")
 shader_parameter/light_direction = Vector3(0, -1, 0.5)
 shader_parameter/smoothness = 7.675
 shader_parameter/reflectivity = 0.25

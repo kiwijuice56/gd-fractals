@@ -1,9 +1,9 @@
 shader_type spatial;
-render_mode unshaded, depth_prepass_alpha;
+render_mode unshaded, depth_draw_opaque;
 
 // Some constants that you probably don't need to change
 const float MAX_DISTANCE = 10000.0; // Placeholder value for infinitely far away distances
-const float SMOOTH_UNION_MULTIPLIER = 4.0; // See smooth_union(...)
+const float SMOOTH_UNION_MULTIPLIER = 3.0; // See smooth_union(...)
 const float BOUNCE_EPSILON_MULTIPLIER = 4.0; // Controls how far a ray should move away from a surface to prevent artifacts during shadows/bounces
 const float SHADOW_EPSILON_MULTIPLIER = 4.0;
 const float DR_MIX = 0.3;
@@ -246,8 +246,7 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 			vec3 _garbage;
 			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + beta + animation_intensity *  0.01 * sin(animation_speed * TIME) - 0.01));
 			x.xyz = D * R;
-			float dr_scale = alpha * R * (1.0 + noise_frequency);
-			dr = dr * dr_scale;
+			dr = dr * alpha * R * (1.0 + noise_frequency);
 			dr = mix(dr, sqrt(dr), DR_MIX); // More resistant to noise
 			collision_info.r += color_frequency * exp(D.x);
 		}
@@ -393,9 +392,7 @@ void fragment() {
 		}
 		ALBEDO.rgb = clamp(pixel_color.rgb, vec3(0.0), vec3(1.0));
 		ALPHA = pixel_color.a;
-		vec3 world_hit = (MODEL_MATRIX * vec4(final_ray_pos, 1.0)).xyz;
-		vec4 view_hit = VIEW_MATRIX * vec4(world_hit, 1.0);
-		vec4 clip_pos = PROJECTION_MATRIX * view_hit;
+		vec4 clip_pos = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(final_ray_pos, 1.0);
 		DEPTH = clip_pos.z / clip_pos.w;
 	} else {
 		ALBEDO = clear_color.rgb;

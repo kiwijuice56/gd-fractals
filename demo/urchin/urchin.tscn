@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://d4cw3m0wkykjp"]
+[gd_scene load_steps=5 format=3 uid="uid://dhoujoqo7r6gd"]
 
-[ext_resource type="Material" uid="uid://eq687kxvpbso" path="res://demo/bird/bird_material.tres" id="1_ffvbg"]
-[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/bird/bird.gd" id="3_jkuj8"]
+[ext_resource type="Material" uid="uid://dp4myw4v55h3s" path="res://demo/urchin/urchin_material.tres" id="1_mm3sq"]
+[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/bird/bird.gd" id="2_nor6n"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(1, 1)
@@ -11,13 +11,13 @@ orientation = 2
 radius = 0.3
 height = 0.7
 
-[node name="Bird" type="MeshInstance3D" unique_id=607117355]
+[node name="Urchin" type="MeshInstance3D" unique_id=607117355]
 transform = Transform3D(0.2780697, -0.6123724, -0.56568545, 0.6811289, 0.49999997, 0, 0.2780697, -0.61237234, 0.5656854, 0, 0, 0)
-material_override = ExtResource("1_ffvbg")
+material_override = ExtResource("1_mm3sq")
 cast_shadow = 0
 extra_cull_margin = 16.0
 mesh = SubResource("PlaneMesh_n23bp")
-script = ExtResource("3_jkuj8")
+script = ExtResource("2_nor6n")
 
 [node name="ShadowCaster" type="MeshInstance3D" parent="." unique_id=675608963]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
