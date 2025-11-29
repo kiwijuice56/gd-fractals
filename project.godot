@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="fractal-fish"
+config/name="gd-fractals"
 run/main_scene="uid://bmmi6fbli5q4t"
 config/features=PackedStringArray("4.6", "Forward Plus")
 run/max_fps=60

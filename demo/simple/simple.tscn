@@ -1,7 +1,8 @@
-[gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://dp4myw4v55h3s"]
+[gd_scene load_steps=10 format=3 uid="uid://dy4fblmil71sh"]
 
-[ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_gh1s4"]
-[ext_resource type="ImageTexture3D" path="res://sdf_textures/urchin_64.res" id="2_gh1s4"]
+[ext_resource type="Shader" uid="uid://bpfx21satfbwt" path="res://rendering/raymarcher_simple.gdshader" id="1_wlklx"]
+[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/bird/bird.gd" id="2_75y5h"]
+[ext_resource type="ImageTexture3D" path="res://sdf_textures/urchin_64.res" id="2_t5ffb"]
 
 [sub_resource type="Gradient" id="Gradient_rmds6"]
 interpolation_color_space = 2
@@ -25,39 +26,39 @@ color_ramp = SubResource("Gradient_rmds6")
 seamless = true
 seamless_blend_skirt = 0.28
 
-[resource]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_og3ss"]
 render_priority = 0
-shader = ExtResource("1_gh1s4")
-shader_parameter/primary_max_iterations = 35
+shader = ExtResource("1_wlklx")
+shader_parameter/primary_max_iterations = 128
 shader_parameter/max_bounces = 1
-shader_parameter/collision_threshold = 0.01
-shader_parameter/normal_sample_length = 0.001
-shader_parameter/march_proportion = 0.826000039235
+shader_parameter/collision_threshold = 0.001
+shader_parameter/normal_sample_length = 0.006
+shader_parameter/march_proportion = 0.65600003116
 shader_parameter/runaway_threshold = 5.0
-shader_parameter/bounding_radius = 1.1
+shader_parameter/bounding_radius = 2.0
 shader_parameter/fractal_iterations = 4
 shader_parameter/fractal_color_1 = Color(0.48382163, 0.52193195, 0.61817276, 1)
 shader_parameter/fractal_color_2 = Color(0.78070617, 0.619616, 0.68778104, 1)
 shader_parameter/animation_speed = 0.945
 shader_parameter/animation_intensity = 0.805
-shader_parameter/secondary_fractal_offset = Vector3(-0.444, 0, 0)
+shader_parameter/secondary_fractal_offset = Vector3(0, 0, 0)
 shader_parameter/secondary_fractal_scale = Vector3(0.333, 0.25, 0.333)
-shader_parameter/secondary_fractal_blend_smoothness = 0.01
-shader_parameter/secondary_fractal_option = 0
-shader_parameter/mandelbulb_power = 4.54
+shader_parameter/secondary_fractal_blend_smoothness = 0.1
+shader_parameter/secondary_fractal_option = 4
+shader_parameter/mandelbulb_power = 6.67
 shader_parameter/mandelbulb_runaway_threshold = 2.0
 shader_parameter/color_center_point = Vector3(0, 8.805, -0.5)
 shader_parameter/color_balance = 0.1600000076
-shader_parameter/mandelbox_scale = 26.33
+shader_parameter/mandelbox_scale = 1.18
 shader_parameter/julia_center = Vector4(0, -0.3, 0.3, -0.6)
 shader_parameter/julia_runaway_threshold = 2.0
-shader_parameter/sierpinski_scale = 1.1
+shader_parameter/sierpinski_scale = 1.13
 shader_parameter/versor_type = 0
 shader_parameter/color_frequency = 4.0
 shader_parameter/alpha = 4.945
 shader_parameter/beta = -0.04
 shader_parameter/noise = SubResource("NoiseTexture3D_rvi3a")
-shader_parameter/noise_frequency = 2.177
+shader_parameter/noise_frequency = 1.7922
 shader_parameter/portal_center_1 = Vector3(0.5, 0.855, 0.5)
 shader_parameter/portal_offset_1 = Vector3(0.5, 0.47, 0.5)
 shader_parameter/portal_radius_1 = 0.205
@@ -65,15 +66,35 @@ shader_parameter/portal_scale_1 = 2.96
 shader_parameter/point1 = Vector4(0, 0, 0, 0)
 shader_parameter/point2 = Vector4(0, 0, 0, 0)
 shader_parameter/point3 = Vector4(0, 0, 0, 0)
-shader_parameter/sdf_texture = ExtResource("2_gh1s4")
+shader_parameter/sdf_texture = ExtResource("2_t5ffb")
 shader_parameter/light_direction = Vector3(0, -1, 0.5)
-shader_parameter/smoothness = 3.77
-shader_parameter/reflectivity = 0.54
-shader_parameter/specular_color = Color(0.5386024, 0.5386024, 0.5386023, 1)
-shader_parameter/specular_ratio = 0.5810000275975
+shader_parameter/smoothness = 7.675
+shader_parameter/reflectivity = 0.25
+shader_parameter/specular_color = Color(0.34, 0.34, 0.34, 1)
+shader_parameter/specular_ratio = 0.902000042845
 shader_parameter/real_shadows_enabled = true
-shader_parameter/fake_shadow_darkness = 0.6490000308275
-shader_parameter/real_shadow_darkness = 0.414000019665
+shader_parameter/fake_shadow_darkness = 0.60400002869
+shader_parameter/real_shadow_darkness = 0.2390000113525
 shader_parameter/shadow_absorption = Vector3(1.2, 1.1, 1)
 shader_parameter/shadow_softness = 1.0
 shader_parameter/clear_color = Color(0, 0, 0, 0)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
+size = Vector2(1, 1)
+orientation = 2
+
+[sub_resource type="SphereMesh" id="SphereMesh_pefpt"]
+radius = 0.3
+height = 0.7
+
+[node name="Urchin" type="MeshInstance3D" unique_id=607117355]
+material_override = SubResource("ShaderMaterial_og3ss")
+cast_shadow = 0
+extra_cull_margin = 16.0
+mesh = SubResource("PlaneMesh_n23bp")
+script = ExtResource("2_75y5h")
+
+[node name="ShadowCaster" type="MeshInstance3D" parent="." unique_id=675608963]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+cast_shadow = 3
+mesh = SubResource("SphereMesh_pefpt")

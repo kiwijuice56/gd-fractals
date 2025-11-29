@@ -1,7 +1,7 @@
 [gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://bve65ej30u128"]
 
 [ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_v5tgj"]
-[ext_resource type="ImageTexture3D" uid="uid://cu07to3qoin76" path="res://sdf_textures/bunny_128.res" id="2_f2x0d"]
+[ext_resource type="ImageTexture3D" uid="uid://boskyh1aw6dsg" path="res://sdf_textures/bunny_64.res" id="2_i16wx"]
 
 [sub_resource type="Gradient" id="Gradient_n23bp"]
 offsets = PackedFloat32Array(0, 0.15560167, 0.62033194, 1)
@@ -29,21 +29,21 @@ seamless_blend_skirt = 0.355
 [resource]
 render_priority = 0
 shader = ExtResource("1_v5tgj")
-shader_parameter/primary_max_iterations = 32
+shader_parameter/primary_max_iterations = 48
 shader_parameter/max_bounces = 1
-shader_parameter/collision_threshold = 0.03
+shader_parameter/collision_threshold = 0.002
 shader_parameter/normal_sample_length = 0.005
-shader_parameter/march_proportion = 0.46000002185
+shader_parameter/march_proportion = 1.0
 shader_parameter/runaway_threshold = 5.0
 shader_parameter/bounding_radius = 1.0
-shader_parameter/fractal_iterations = 5
+shader_parameter/fractal_iterations = 4
 shader_parameter/fractal_color_1 = Color(0.53391224, 0.7981051, 0.86575234, 1)
 shader_parameter/fractal_color_2 = Color(0.1716, 0.49719995, 0.66, 1)
 shader_parameter/animation_speed = 1.0
 shader_parameter/animation_intensity = 0.3
 shader_parameter/secondary_fractal_offset = Vector3(0.185, 0.04, 0.305)
 shader_parameter/secondary_fractal_scale = Vector3(0.09, 0.09, 0.09)
-shader_parameter/secondary_fractal_blend_smoothness = 0.1
+shader_parameter/secondary_fractal_blend_smoothness = 0.01
 shader_parameter/secondary_fractal_option = 1
 shader_parameter/mandelbulb_power = 8.0
 shader_parameter/mandelbulb_runaway_threshold = 2.0
@@ -53,6 +53,7 @@ shader_parameter/mandelbox_scale = 1.505
 shader_parameter/julia_center = Vector4(0, -0.3, 0.3, -0.6)
 shader_parameter/julia_runaway_threshold = 2.0
 shader_parameter/sierpinski_scale = 1.1
+shader_parameter/versor_type = 0
 shader_parameter/color_frequency = 1.565
 shader_parameter/alpha = 6.175
 shader_parameter/beta = -0.04
@@ -62,7 +63,10 @@ shader_parameter/portal_center_1 = Vector3(0.75, 0.85, 0.135)
 shader_parameter/portal_offset_1 = Vector3(0.735, 1.055, 0.2)
 shader_parameter/portal_radius_1 = 0.19
 shader_parameter/portal_scale_1 = 4.52
-shader_parameter/sdf_texture = ExtResource("2_f2x0d")
+shader_parameter/point1 = Vector4(0, 0, 0, 0)
+shader_parameter/point2 = Vector4(0, 0, 0, 0)
+shader_parameter/point3 = Vector4(0, 0, 0, 0)
+shader_parameter/sdf_texture = ExtResource("2_i16wx")
 shader_parameter/light_direction = Vector3(0, -1, 0.5)
 shader_parameter/smoothness = 7.025
 shader_parameter/reflectivity = 0.25

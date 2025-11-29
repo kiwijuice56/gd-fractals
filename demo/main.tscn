@@ -1,9 +1,8 @@
-[gd_scene load_steps=12 format=3 uid="uid://bmmi6fbli5q4t"]
+[gd_scene load_steps=11 format=3 uid="uid://bmmi6fbli5q4t"]
 
 [ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://demo/free_look_camera.gd" id="1_oe2cu"]
 [ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://demo/bird/bird.tscn" id="2_pw243"]
 [ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://demo/bunny/bunny.tscn" id="3_w7hkg"]
-[ext_resource type="PackedScene" uid="uid://ds1lo7wfm5lcq" path="res://demo/starfish/starfish.tscn" id="4_dujpc"]
 [ext_resource type="PackedScene" uid="uid://dhoujoqo7r6gd" path="res://demo/urchin/urchin.tscn" id="5_wrxtx"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
@@ -50,9 +49,6 @@ transform = Transform3D(0.52113616, 0, -0.57286114, 0, 0.91987693, 0, 0.5529777,
 
 [node name="Bunny" parent="." unique_id=860613573 instance=ExtResource("3_w7hkg")]
 transform = Transform3D(1.8704777, 0.6265265, 0.32981563, -0.6170082, 1.8993326, -0.10879518, -0.34729633, -4.4530006e-09, 1.9696156, -1.8000001, 1.3252666, -0.79999995)
-
-[node name="Starfish" parent="." unique_id=607117355 instance=ExtResource("4_dujpc")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.41, 0.4733926, 0.35876775, 0.5153744)
 
 [node name="Urchin" parent="." unique_id=1568187849 instance=ExtResource("5_wrxtx")]
 transform = Transform3D(0.36906007, -0.8127535, 0.2762516, 0.41877335, 0.5723654, 0.4988901, -0.5540809, -0.10876277, 0.5610648, -0.56427675, 0.64299744, 1.6935108)

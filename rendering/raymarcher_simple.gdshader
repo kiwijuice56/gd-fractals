@@ -100,9 +100,9 @@ vec4 quat_mul(vec4 q1, vec4 q2) {
 	vec3 v2 = q2.xyz;
 	float w1 = q1.w;
 	float w2 = q2.w;
-	
+
 	return vec4(
-		w1 * v2 + w2 * v1 + cross(v1, v2), 
+		w1 * v2 + w2 * v1 + cross(v1, v2),
 		w1 * w2 - dot(v1, v2)
 	);
 }
@@ -252,7 +252,7 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	float r = 0.0;
 	float dr = 1.0;
 	float animated_beta = beta + animation_intensity * 0.01 * sin(animation_speed * TIME) - 0.01;
-	
+
 	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(x);
 		float dist_to_portal_1 = length(x.xyz - portal_center_1);
@@ -261,13 +261,13 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 			dr *= portal_scale_1;
 		} else {
 			vec3 D;
-			
+
 			if (versor_type == 0) {
 				D = normalize(texture(noise, animation_intensity * sin(animation_speed * vec3(0.2, 0.3, 0.2) * TIME) + noise_frequency * x.xyz).rgb);
 			} else if (versor_type == 1) {
 				D = normalize(quat_mul(x - point1, quat_mul(x - point2, x - point3)).xyz);
 			}
-			
+
 			vec3 _garbage;
 			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + animated_beta));
 			x.xyz = D * R;
@@ -279,19 +279,10 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	return length(x) / dr;
 }
 
-// NOTE:
-// You should set up this DE to contain the object you want in your scene;
-// You can use collision_info as extraneous data to pass back into the main
-// fragment shader; Right now, this is used for extra color information.
 float world_DE(vec3 p, inout vec3 collision_info) {
-	// example: a mesh fractal merged with a mandelbulb fractal
-
 	// Collision info inputs
 	collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
 	vec3 garbage_; // Need to pass an info variable into the mandelbulb, but we discard the results
-
-	// Collision info is updated here, and distance is calculated
-	float mesh_dist = mesh_fractal_DE(p, collision_info);
 	float secondary_fractal_dist = MAX_DISTANCE;
 
 	switch (secondary_fractal_option) {
@@ -302,7 +293,7 @@ float world_DE(vec3 p, inout vec3 collision_info) {
 		case 4: secondary_fractal_dist = mengersponge_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 	}
 
-	return smooth_union(mesh_dist, secondary_fractal_scale.x * secondary_fractal_dist, secondary_fractal_blend_smoothness);
+	return secondary_fractal_scale.x * secondary_fractal_dist;
 }
 
 // Advances a ray along the world distance estimate
@@ -416,7 +407,7 @@ void fragment() {
 			previous_reflectance = reflectivity;
 		}
 		ALBEDO.rgb = clamp(pixel_color.rgb, vec3(0.0), vec3(1.0));
-		ALPHA = clamp(pixel_color.a, 0.0, 1.0);
+		ALPHA = pixel_color.a;
 		vec4 clip_pos = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(final_ray_pos, 1.0);
 		DEPTH = clip_pos.z / clip_pos.w;
 	} else {

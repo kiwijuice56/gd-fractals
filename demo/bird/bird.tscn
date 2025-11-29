@@ -12,7 +12,7 @@ radius = 0.3
 height = 0.7
 
 [node name="Bird" type="MeshInstance3D" unique_id=607117355]
-transform = Transform3D(0.2780697, -0.6123724, -0.56568545, 0.6811289, 0.49999997, 0, 0.2780697, -0.61237234, 0.5656854, 0, 0, 0)
+transform = Transform3D(0.7864999, 0, 0, 0, 0.9999999, 0, 0, 0, 0.8, 0, 0, 0)
 material_override = ExtResource("1_ffvbg")
 cast_shadow = 0
 extra_cull_margin = 16.0
