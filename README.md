@@ -12,3 +12,4 @@ Dynamic 3D fractals rendered using a raymarching shader in Godot 4. Includes sea
 - [Distance Estimated 3D Fractals (VI): The Mandelbox](http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/)
 - [Revenge of the (Half-Eaten) Menger Sponge](http://www.fractalforums.com/ifs-iterated-function-systems/revenge-of-the-half-eaten-menger-sponge/15/)
 - [Inigo Quilez's Signed Distance Functions](https://iquilezles.org/articles/distfunctions/)
+- [Shader Fractals](https://github.com/pedrotrschneider/shader-fractals/tree/main)

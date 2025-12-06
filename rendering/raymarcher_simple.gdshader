@@ -1,9 +1,14 @@
 shader_type spatial;
 render_mode unshaded, depth_draw_opaque;
 
+// A simplified version of raymarcher.gdshader without the mesh capabilities
+
+// Use this if you want to use the secondary fractals by themselves --
+// the mesh shader is very performance intensive, so you can get a lot more detail
+// by using this shader
+
 // Some constants that you probably don't need to change
 const float MAX_DISTANCE = 10000.0; // Placeholder value for infinitely far away distances
-const float SMOOTH_UNION_MULTIPLIER = 3.0; // See smooth_union(...)
 const float BOUNCE_EPSILON_MULTIPLIER = 4.0; // Controls how far a ray should move away from a surface to prevent artifacts during shadows/bounces
 const float SHADOW_EPSILON_MULTIPLIER = 4.0;
 const float DR_MIX = 0.4;
@@ -28,8 +33,7 @@ uniform float animation_speed = 1.0;
 uniform float animation_intensity = 0.3; // Strength of the animations
 uniform vec3 secondary_fractal_offset = vec3(-1.2, 0.0, 0.0);
 uniform vec3 secondary_fractal_scale = vec3(0.333, 0.25, 0.333);
-uniform float secondary_fractal_blend_smoothness = 0.1;
-uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge") = 0;
+uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge", "Brocolli") = 0;
 
 group_uniforms mandelbulb;
 uniform float mandelbulb_power = 8.0;
@@ -46,6 +50,10 @@ uniform float julia_runaway_threshold = 2.0;
 
 group_uniforms sierpinski;
 uniform float sierpinski_scale = 1.1;
+
+group_uniforms brocolli;
+uniform vec3 brocolli_offset = vec3 (2.0, 4.8, 0.0);
+uniform float brocolli_runaway_threshold = 32.0;
 
 group_uniforms shape_modulus;
 uniform int versor_type : hint_enum("Noise", "Points") = 0;
@@ -107,20 +115,6 @@ vec4 quat_mul(vec4 q1, vec4 q2) {
 	);
 }
 
-// Combines distances of two shapes (OR)
-// https://iquilezles.org/articles/distfunctions/
-float smooth_union(float d1, float d2, float k) {
-	k *= SMOOTH_UNION_MULTIPLIER;
-	float h = max(k - abs(d1 - d2), 0.0);
-	return min(d1, d2) - h * h / SMOOTH_UNION_MULTIPLIER / k;
-}
-
-// Combines distances of two shapes (AND)
-// https://iquilezles.org/articles/distfunctions/
-float smooth_intersection(float d1, float d2, float k) {
-	return -smooth_union(-d1, -d2, k);
-}
-
 // Returns the time value that a ray intersects with a sphere
 float intersect_sphere(vec3 ray_pos, vec3 ray_dir, float radius) {
 	float b = dot(ray_pos, ray_dir);
@@ -171,6 +165,46 @@ float tetrahedron_DE(vec3 p, inout vec3 collision_info) {
 		p = p * scale - offset * (scale - 1.0);
 	}
 	return length(p) * pow(scale, -16.0);
+}
+
+mat2 rotate(float angle) {
+	float s = sin(angle);
+	float c = cos(angle);
+	return mat2(vec2(c, -s), vec2(s, c));
+}
+
+// https://github.com/pedrotrschneider/shader-fractals/blob/main/3D/MengerBrocolli.glsl
+float brocolli_DE(vec3 z, inout vec3 collision_info) {
+	float brocolli_scale = 0.7 + sin(animation_speed * TIME) * 0.1 + 0.9;
+	vec3 anim_brocolli_offset = brocolli_offset + animation_intensity * sin(animation_speed * TIME * 0.2) * vec3(0.2, 0.3, 0.1);
+
+	float r = length(z);
+	int n = 0;
+	for (; n < fractal_iterations; n++) {
+		if (r > brocolli_runaway_threshold) break;
+		z.x = abs (z.x);
+		z.y = abs (z.y);
+		z.z = abs (z.z);
+
+		if (z.x - z.y < 0.0) z.xy = z.yx; // fold 1
+		if (z.x - z.z < 0.0) z.xz = z.zx; // fold 2
+		if (z.y - z.z < 0.0) z.zy = z.yz; // fold 3
+
+		z.yx *= rotate(0.436332 + sin(animation_speed * TIME * 0.9) * 0.1 + 4.9);
+
+		z.x = z.x * brocolli_scale - anim_brocolli_offset.x * (brocolli_scale - 1.0);
+		z.y = z.y * brocolli_scale - anim_brocolli_offset.y * (brocolli_scale - 1.0);
+		z.z = z.z * brocolli_scale;
+
+		if (z.z > 0.25 * anim_brocolli_offset.z * (brocolli_scale - 1.0)) {
+			z.z -= anim_brocolli_offset.z * (brocolli_scale - 1.0);
+		}
+
+		r = length (z);
+		collision_info.r = min(collision_info.r, length(z - color_center_point));
+	}
+
+	return (length(z) - 2.0) * pow(brocolli_scale, -float(n));
 }
 
 // http://www.fractalforums.com/ifs-iterated-function-systems/revenge-of-the-half-eaten-menger-sponge/15/
@@ -282,15 +316,15 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 float world_DE(vec3 p, inout vec3 collision_info) {
 	// Collision info inputs
 	collision_info = vec3(1.0, MAX_DISTANCE, 0.0);
-	vec3 garbage_; // Need to pass an info variable into the mandelbulb, but we discard the results
 	float secondary_fractal_dist = MAX_DISTANCE;
 
 	switch (secondary_fractal_option) {
-		case 0: secondary_fractal_dist = mandelbulb_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
-		case 1: secondary_fractal_dist = mandelbox_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
-		case 2: secondary_fractal_dist = julia_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
-		case 3: secondary_fractal_dist = tetrahedron_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
-		case 4: secondary_fractal_dist = mengersponge_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 0: secondary_fractal_dist = mandelbulb_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 1: secondary_fractal_dist = mandelbox_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 2: secondary_fractal_dist = julia_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 3: secondary_fractal_dist = tetrahedron_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 4: secondary_fractal_dist = mengersponge_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 5: secondary_fractal_dist = brocolli_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
 	}
 
 	return secondary_fractal_scale.x * secondary_fractal_dist;

@@ -1,0 +1,81 @@
+[gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://bhn6gpo1t0pb5"]
+
+[ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_3pegs"]
+[ext_resource type="ImageTexture3D" uid="uid://dbpmvs4jbdqr" path="res://sdf_textures/bird_64.res" id="2_8pqnq"]
+
+[sub_resource type="Gradient" id="Gradient_rmds6"]
+interpolation_color_space = 2
+offsets = PackedFloat32Array(0, 0.59123224, 1)
+colors = PackedColorArray(0.8774371, 0.73469293, 0, 1, 0.63675064, 0.96196824, 0.9143594, 1, 0.20806539, 0.38582507, 0.31904486, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_aa2uc"]
+noise_type = 2
+seed = 15
+frequency = 0.026
+fractal_type = 3
+fractal_octaves = 2
+fractal_lacunarity = 2.11
+fractal_gain = 4.94
+domain_warp_amplitude = 3.0
+domain_warp_frequency = 0.315
+
+[sub_resource type="NoiseTexture3D" id="NoiseTexture3D_rvi3a"]
+noise = SubResource("FastNoiseLite_aa2uc")
+color_ramp = SubResource("Gradient_rmds6")
+seamless = true
+seamless_blend_skirt = 0.28
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_3pegs")
+shader_parameter/primary_max_iterations = 45
+shader_parameter/max_bounces = 1
+shader_parameter/collision_threshold = 0.01
+shader_parameter/normal_sample_length = 0.003
+shader_parameter/march_proportion = 1.0
+shader_parameter/runaway_threshold = 5.0
+shader_parameter/bounding_radius = 1.1
+shader_parameter/fractal_iterations = 4
+shader_parameter/fractal_color_1 = Color(0.81740904, 0.8145289, 0.7850411, 1)
+shader_parameter/fractal_color_2 = Color(0.86266875, 0.62001187, 0.058311827, 1)
+shader_parameter/animation_speed = 0.8
+shader_parameter/animation_intensity = 0.3
+shader_parameter/secondary_fractal_offset = Vector3(-0.484, 0, 0)
+shader_parameter/secondary_fractal_scale = Vector3(0.05, 0.05, 0.06)
+shader_parameter/secondary_fractal_blend_smoothness = 0.02
+shader_parameter/secondary_fractal_option = 5
+shader_parameter/mandelbulb_power = 10.04
+shader_parameter/mandelbulb_runaway_threshold = 2.0
+shader_parameter/color_center_point = Vector3(0, 8.805, -0.5)
+shader_parameter/color_balance = 0.1600000076
+shader_parameter/mandelbox_scale = 2.755
+shader_parameter/julia_center = Vector4(0, -0.3, 0.3, -0.6)
+shader_parameter/julia_runaway_threshold = 2.0
+shader_parameter/sierpinski_scale = 1.1
+shader_parameter/brocolli_offset = Vector3(4.345, 4.265, 0.05)
+shader_parameter/brocolli_runaway_threshold = 32.0
+shader_parameter/versor_type = 0
+shader_parameter/color_frequency = 4.0
+shader_parameter/alpha = 3.84
+shader_parameter/beta = -0.135
+shader_parameter/noise = SubResource("NoiseTexture3D_rvi3a")
+shader_parameter/noise_frequency = 2.0
+shader_parameter/portal_center_1 = Vector3(0.5, 0.855, 0.5)
+shader_parameter/portal_offset_1 = Vector3(0.5, 0.47, 0.5)
+shader_parameter/portal_radius_1 = 0.205
+shader_parameter/portal_scale_1 = 2.96
+shader_parameter/point1 = Vector4(-0.05, -0.11, 0.11, 0)
+shader_parameter/point2 = Vector4(0.09, 0.175, 0, 0)
+shader_parameter/point3 = Vector4(0.09, -0.08, -0.13, 0)
+shader_parameter/sdf_texture = ExtResource("2_8pqnq")
+shader_parameter/light_direction = Vector3(0, -1, 0.5)
+shader_parameter/smoothness = 7.675
+shader_parameter/reflectivity = 0.25
+shader_parameter/specular_color = Color(0.6353911, 0.63539064, 0.6353907, 1)
+shader_parameter/specular_ratio = 0.902000042845
+shader_parameter/real_shadows_enabled = true
+shader_parameter/fake_shadow_darkness = 0.60400002869
+shader_parameter/real_shadow_darkness = 0.2390000113525
+shader_parameter/shadow_absorption = Vector3(1.2, 1.1, 1)
+shader_parameter/shadow_softness = 1.0
+shader_parameter/clear_color = Color(0, 0, 0, 0)

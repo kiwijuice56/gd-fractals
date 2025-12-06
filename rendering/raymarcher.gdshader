@@ -29,7 +29,7 @@ uniform float animation_intensity = 0.3; // Strength of the animations
 uniform vec3 secondary_fractal_offset = vec3(-1.2, 0.0, 0.0);
 uniform vec3 secondary_fractal_scale = vec3(0.333, 0.25, 0.333);
 uniform float secondary_fractal_blend_smoothness = 0.1;
-uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge") = 0;
+uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge", "Brocolli") = 0;
 
 group_uniforms mandelbulb;
 uniform float mandelbulb_power = 8.0;
@@ -46,6 +46,11 @@ uniform float julia_runaway_threshold = 2.0;
 
 group_uniforms sierpinski;
 uniform float sierpinski_scale = 1.1;
+
+group_uniforms brocolli;
+uniform vec3 brocolli_offset = vec3 (2.0, 4.8, 0.0);
+uniform float brocolli_runaway_threshold = 32.0;
+
 
 group_uniforms shape_modulus;
 uniform int versor_type : hint_enum("Noise", "Points") = 0;
@@ -100,9 +105,9 @@ vec4 quat_mul(vec4 q1, vec4 q2) {
 	vec3 v2 = q2.xyz;
 	float w1 = q1.w;
 	float w2 = q2.w;
-	
+
 	return vec4(
-		w1 * v2 + w2 * v1 + cross(v1, v2), 
+		w1 * v2 + w2 * v1 + cross(v1, v2),
 		w1 * w2 - dot(v1, v2)
 	);
 }
@@ -241,6 +246,46 @@ float julia_DE(vec3 p, inout vec3 collision_info) {
 	return 0.5 * r * log(r) / dr;
 }
 
+mat2 rotate(float angle) {
+	float s = sin(angle);
+	float c = cos(angle);
+	return mat2(vec2(c, -s), vec2(s, c));
+}
+
+// https://github.com/pedrotrschneider/shader-fractals/blob/main/3D/MengerBrocolli.glsl
+float brocolli_DE(vec3 z, inout vec3 collision_info) {
+	float brocolli_scale = 0.7 + sin(animation_speed * TIME) * 0.1 + 0.9;
+	vec3 anim_brocolli_offset = brocolli_offset + animation_intensity * sin(animation_speed * TIME * 0.2) * vec3(0.2, 0.3, 0.1);
+
+	float r = length(z);
+	int n = 0;
+	for (; n < fractal_iterations; n++) {
+		if (r > brocolli_runaway_threshold) break;
+		z.x = abs (z.x);
+		z.y = abs (z.y);
+		z.z = abs (z.z);
+
+		if (z.x - z.y < 0.0) z.xy = z.yx; // fold 1
+		if (z.x - z.z < 0.0) z.xz = z.zx; // fold 2
+		if (z.y - z.z < 0.0) z.zy = z.yz; // fold 3
+
+		z.yx *= rotate(0.436332 + sin(animation_speed * TIME * 0.9) * 0.1 + 4.9);
+
+		z.x = z.x * brocolli_scale - anim_brocolli_offset.x * (brocolli_scale - 1.0);
+		z.y = z.y * brocolli_scale - anim_brocolli_offset.y * (brocolli_scale - 1.0);
+		z.z = z.z * brocolli_scale;
+
+		if (z.z > 0.25 * anim_brocolli_offset.z * (brocolli_scale - 1.0)) {
+			z.z -= anim_brocolli_offset.z * (brocolli_scale - 1.0);
+		}
+
+		r = length (z);
+		collision_info.r = min(collision_info.r, length(z - color_center_point));
+	}
+
+	return (length(z) - 2.0) * pow(brocolli_scale, -float(n));
+}
+
 // Distance estimate read from a .sdf texture (converted to a 3D texture resource)
 float mesh_DE(vec3 p, inout vec3 collision_info) {
 	return texture(sdf_texture, p).r * 2.0 - 1.0;
@@ -252,7 +297,7 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	float r = 0.0;
 	float dr = 1.0;
 	float animated_beta = beta + animation_intensity * 0.01 * sin(animation_speed * TIME) - 0.01;
-	
+
 	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(x);
 		float dist_to_portal_1 = length(x.xyz - portal_center_1);
@@ -261,13 +306,13 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 			dr *= portal_scale_1;
 		} else {
 			vec3 D;
-			
+
 			if (versor_type == 0) {
 				D = normalize(texture(noise, animation_intensity * sin(animation_speed * vec3(0.2, 0.3, 0.2) * TIME) + noise_frequency * x.xyz).rgb);
 			} else if (versor_type == 1) {
 				D = normalize(quat_mul(x - point1, quat_mul(x - point2, x - point3)).xyz);
 			}
-			
+
 			vec3 _garbage;
 			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + animated_beta));
 			x.xyz = D * R;
@@ -300,6 +345,7 @@ float world_DE(vec3 p, inout vec3 collision_info) {
 		case 2: secondary_fractal_dist = julia_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 		case 3: secondary_fractal_dist = tetrahedron_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 		case 4: secondary_fractal_dist = mengersponge_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 5: secondary_fractal_dist = brocolli_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 	}
 
 	return smooth_union(mesh_dist, secondary_fractal_scale.x * secondary_fractal_dist, secondary_fractal_blend_smoothness);
