@@ -1,7 +1,7 @@
 [gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://bhn6gpo1t0pb5"]
 
 [ext_resource type="Shader" uid="uid://fdhkmu4rxw64" path="res://rendering/raymarcher.gdshader" id="1_3pegs"]
-[ext_resource type="ImageTexture3D" path="res://sdf_textures/bird_256.res" id="2_3pegs"]
+[ext_resource type="ImageTexture3D" uid="uid://boco28jvueqjk" path="res://sdf_textures/bird_256.res" id="2_3pegs"]
 
 [sub_resource type="Gradient" id="Gradient_rmds6"]
 interpolation_color_space = 2
@@ -31,7 +31,7 @@ shader = ExtResource("1_3pegs")
 shader_parameter/primary_max_iterations = 64
 shader_parameter/max_bounces = 1
 shader_parameter/collision_threshold = 0.01
-shader_parameter/normal_sample_length = 0.006
+shader_parameter/normal_sample_length = 0.01
 shader_parameter/march_proportion = 0.8750000415625
 shader_parameter/runaway_threshold = 5.0
 shader_parameter/bounding_radius = 1.1

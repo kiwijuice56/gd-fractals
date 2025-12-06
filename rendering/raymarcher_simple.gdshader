@@ -190,13 +190,13 @@ float brocolli_DE(vec3 z, inout vec3 collision_info) {
 		if (z.x - z.z < 0.0) z.xz = z.zx; // fold 2
 		if (z.y - z.z < 0.0) z.zy = z.yz; // fold 3
 
-		z.yx *= rotate(0.436332 + sin(animation_speed * TIME * 0.9) * 0.1 + 4.9);
+		z.yx *= rotate(0.436332 + sin(animation_speed * TIME * 0.9) * 0.1 + 5.0);
 
 		z.x = z.x * brocolli_scale - anim_brocolli_offset.x * (brocolli_scale - 1.0);
 		z.y = z.y * brocolli_scale - anim_brocolli_offset.y * (brocolli_scale - 1.0);
 		z.z = z.z * brocolli_scale;
 
-		if (z.z > 0.25 * anim_brocolli_offset.z * (brocolli_scale - 1.0)) {
+		if (z.z > 0.45 * anim_brocolli_offset.z * (brocolli_scale - 1.0)) {
 			z.z -= anim_brocolli_offset.z * (brocolli_scale - 1.0);
 		}
 
