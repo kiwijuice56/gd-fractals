@@ -291,6 +291,10 @@ float mesh_DE(vec3 p, inout vec3 collision_info) {
 	return texture(sdf_texture, p).r * 2.0 - 1.0;
 }
 
+float sphere_DE(vec3 p, float s){
+	return length(p) - s;
+}
+
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	// Center the fractal around the origin (mesh_DE is offset)
 	vec4 x = vec4(p + vec3(0.5), 0.0);
@@ -310,11 +314,13 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 			if (versor_type == 0) {
 				D = normalize(texture(noise, animation_intensity * sin(animation_speed * vec3(0.2, 0.3, 0.2) * TIME) + noise_frequency * x.xyz).rgb);
 			} else if (versor_type == 1) {
-				D = normalize(quat_mul(x - point1, quat_mul(x - point2, x - point3)).xyz);
+				D = normalize(
+					mix(x.xyz, abs(sin(animation_speed * TIME + 8.0 * x.xzy) + cos(16.0 * x.yxz)), 0.4)
+				);
 			}
-
 			vec3 _garbage;
-			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + animated_beta));
+			float mesh_distance = mesh_DE(x.xyz, _garbage);
+			float R = exp(alpha * (mesh_distance + animated_beta));
 			x.xyz = D * R;
 			dr *= alpha * R * DR_SCALAR;
 			dr = mix(dr, sqrt(dr), DR_MIX); // More resistant to noise, but hacky
