@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://cyg8hpbibrrl2"]
+[gd_scene format=3 uid="uid://cft2l8k6gg1qq"]
 
-[ext_resource type="Material" uid="uid://clsuyau0k68e2" path="res://demo/bunny/bunny_2_material.tres" id="1_l2jel"]
+[ext_resource type="Material" uid="uid://bve65ej30u128" path="res://demo/bunny/bunny_material.tres" id="1_kuu4l"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(1, 1)
@@ -11,7 +11,7 @@ radius = 0.3
 height = 0.7
 
 [node name="Bunny" type="MeshInstance3D" unique_id=965001392]
-material_override = ExtResource("1_l2jel")
+material_override = ExtResource("1_kuu4l")
 cast_shadow = 0
 extra_cull_margin = 16.0
 mesh = SubResource("PlaneMesh_n23bp")

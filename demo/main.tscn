@@ -1,29 +1,49 @@
-[gd_scene load_steps=13 format=3 uid="uid://bmmi6fbli5q4t"]
+[gd_scene load_steps=23 format=3 uid="uid://bmmi6fbli5q4t"]
 
+[ext_resource type="Texture2D" uid="uid://c4eup7twm6e3m" path="res://demo/sky.png" id="1_d70j4"]
 [ext_resource type="Script" uid="uid://ddqpmv4pp7myy" path="res://demo/free_look_camera.gd" id="1_oe2cu"]
 [ext_resource type="PackedScene" uid="uid://d4cw3m0wkykjp" path="res://demo/bird/bird.tscn" id="2_pw243"]
 [ext_resource type="PackedScene" uid="uid://bw440k8n0muww" path="res://demo/bird/bird_2.tscn" id="3_cqq71"]
 [ext_resource type="PackedScene" uid="uid://cyg8hpbibrrl2" path="res://demo/bunny/bunny.tscn" id="3_w7hkg"]
 [ext_resource type="PackedScene" uid="uid://dy4fblmil71sh" path="res://demo/simple/simple.tscn" id="5_cqq71"]
 [ext_resource type="PackedScene" uid="uid://dhoujoqo7r6gd" path="res://demo/urchin/urchin.tscn" id="5_wrxtx"]
+[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/rotate.gd" id="6_au1l0"]
+[ext_resource type="ArrayMesh" uid="uid://1vwnnd1xat3q" path="res://models/bunny.obj" id="8_7a6vi"]
+[ext_resource type="PackedScene" uid="uid://b6h7lpodygvtq" path="res://demo/simple/simple_2.tscn" id="9_nr2wj"]
+[ext_resource type="ArrayMesh" uid="uid://6o8dhpy8efnd" path="res://models/urchin.obj" id="10_iscmt"]
+[ext_resource type="ArrayMesh" uid="uid://oisily48leea" path="res://models/bird.obj" id="10_kbqbn"]
+[ext_resource type="PackedScene" uid="uid://c8xdvsxdyhrs5" path="res://demo/simple/simple_5.tscn" id="13_f8mb2"]
+[ext_resource type="PackedScene" uid="uid://cft2l8k6gg1qq" path="res://demo/bunny/bunny_2.tscn" id="13_fdg1k"]
+[ext_resource type="PackedScene" uid="uid://chdkd6gfsesb0" path="res://demo/simple/simple_3.tscn" id="14_6g5ly"]
+[ext_resource type="PackedScene" uid="uid://cmgwc78g2kjp3" path="res://demo/simple/simple_4.tscn" id="15_ucu34"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_7a6vi"]
+panorama = ExtResource("1_d70j4")
 
 [sub_resource type="Sky" id="Sky_h2yge"]
-sky_material = SubResource("ProceduralSkyMaterial_0xm2m")
+sky_material = SubResource("PanoramaSkyMaterial_7a6vi")
 
 [sub_resource type="Environment" id="Environment_0xm2m"]
 background_mode = 2
 sky = SubResource("Sky_h2yge")
-volumetric_fog_enabled = true
+ambient_light_source = 3
+ambient_light_color = Color(1, 1, 1, 1)
+tonemap_mode = 3
+ssao_enabled = true
+glow_enabled = true
+glow_bloom = 0.33
+fog_enabled = true
+fog_light_color = Color(0.7716614, 0.7942721, 0.8294512, 1)
+fog_aerial_perspective = 0.554
 volumetric_fog_albedo = Color(0.65, 0.598, 0.60753334, 1)
 volumetric_fog_emission = Color(0.23, 0.1886, 0.21136999, 1)
 volumetric_fog_anisotropy = 0.74
+volumetric_fog_sky_affect = 0.422
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1bvp3"]
-albedo_color = Color(0.34, 0.2516, 0.26928002, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_0xm2m"]
+size = Vector2(8, 8)
 
 [sub_resource type="BoxMesh" id="BoxMesh_0xm2m"]
 
@@ -34,7 +54,7 @@ transform = Transform3D(1, 0, 0, 0, -0.50000006, 0.8660254, 0, -0.8660254, -0.50
 light_energy = 0.2
 light_volumetric_fog_energy = 2.0
 shadow_enabled = true
-shadow_blur = 2.0
+shadow_blur = 0.401
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1772141683]
 environment = SubResource("Environment_0xm2m")
@@ -47,19 +67,35 @@ script = ExtResource("1_oe2cu")
 sensitivity = 0.2
 
 [node name="Bird" parent="." unique_id=1194318444 instance=ExtResource("2_pw243")]
-transform = Transform3D(0.52113616, 0, -0.57286114, 0, 0.91987693, 0, 0.5529777, 0, 0.5398746, 0.13881564, 0.56558, -0.8474518)
+transform = Transform3D(0.16481063, 0, 0.76842916, 0, 0.91987693, 0, -0.7417578, 0, 0.17073677, -1.7832223, 0.33785695, -5.365575)
 
 [node name="Bird2" parent="." unique_id=607117355 instance=ExtResource("3_cqq71")]
-transform = Transform3D(0.22123173, 0, 0.76769906, 0, 0.9999999, 0, -0.75474405, 0, 0.22502911, 2.2347338, 0.6388485, -0.36909297)
+transform = Transform3D(0.47208756, 0, 0.6398565, 0, 0.99999964, 0, -0.62905884, 0, 0.4801908, -1.7176542, 0.36694312, -6.6479735)
 
 [node name="Bunny" parent="." unique_id=860613573 instance=ExtResource("3_w7hkg")]
-transform = Transform3D(1.8704777, 0.6265265, 0.32981563, -0.6170082, 1.8993326, -0.10879518, -0.34729633, -4.4530006e-09, 1.9696156, -1.8000001, 1.3252666, -0.79999995)
+transform = Transform3D(0.85149336, 0.30119872, 0.42922997, -0.3085041, 0.9496663, -0.054397587, -0.4240097, -0.08610001, 0.90155554, -2.0447495, 0.6480892, -0.5645925)
+script = ExtResource("6_au1l0")
 
 [node name="Urchin" parent="." unique_id=1568187849 instance=ExtResource("5_wrxtx")]
-transform = Transform3D(0.36906007, -0.8127535, 0.2762516, 0.41877335, 0.5723654, 0.4988901, -0.5540809, -0.10876277, 0.5610648, -0.56427675, 0.64299744, 1.6935108)
+transform = Transform3D(0.36906004, -0.8127535, 0.27625164, 0.1279858, 0.46392736, 0.69663906, -0.6826393, -0.35242423, 0.27996242, -1.8622528, 0.31504798, 2.0802145)
 
 [node name="Simple" parent="." unique_id=1541038659 instance=ExtResource("5_cqq71")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4005859, 0.6134906, 1.6221455)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8470454, 0.5308281, 4.9911523)
+
+[node name="Simple2" parent="." unique_id=2020250368 instance=ExtResource("9_nr2wj")]
+transform = Transform3D(0.49620137, 0, -0.86820745, 0, 1, 0, 0.86820745, 0, 0.49620137, -1.9550899, 0.381725, 6.5192847)
+
+[node name="Bunny2" parent="." unique_id=965001392 instance=ExtResource("13_fdg1k")]
+transform = Transform3D(0.9228141, 0, -0.38524586, 0, 1, 0, 0.38524586, 0, 0.9228141, -2.048697, 0.5276439, -2.1111186)
+
+[node name="Simple3" parent="." unique_id=99924883 instance=ExtResource("14_6g5ly")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.155, 1.5, 8)
+
+[node name="Simple4" parent="." unique_id=1435901679 instance=ExtResource("15_ucu34")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.225874, 1.5, 8)
+
+[node name="Simple5" parent="." unique_id=1137537341 instance=ExtResource("13_f8mb2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0100393, 1.5, 8)
 
 [node name="Setting" type="Node3D" parent="." unique_id=456393174]
 
@@ -68,17 +104,52 @@ transform = Transform3D(50, 0, 0, 0, 1, 0, 0, 0, 50, 0, -0.29999995, 0)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("PlaneMesh_0xm2m")
 
-[node name="Cube" type="MeshInstance3D" parent="Setting" unique_id=27547219]
-transform = Transform3D(0.9659258, 0, -0.25881904, 0, 1, 0, 0.25881904, 0, 0.9659258, -0.98047996, -0.49999994, 1.4490607)
+[node name="Cube2" type="MeshInstance3D" parent="Setting" unique_id=292613643]
+transform = Transform3D(0.86602545, 0, 0.5, 0, 1, 0, -0.5, 0, 0.86602545, -1.8908128, -0.5258547, -5.237417)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
 
-[node name="Cube2" type="MeshInstance3D" parent="Setting" unique_id=292613643]
-transform = Transform3D(0.86602545, 0, 0.5, 0, 1, 0, -0.5, 0, 0.86602545, 0.9, 5.9604645e-08, -1.4244003)
+[node name="Cube4" type="MeshInstance3D" parent="Setting" unique_id=1407098025]
+transform = Transform3D(0.99960184, 0, -0.02821824, 0, 1, 0, 0.02821824, 0, 0.99960184, -1.8908128, -0.55457824, 2.2179012)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="Cube6" type="MeshInstance3D" parent="Setting" unique_id=1778567576]
+transform = Transform3D(0.9228611, 0, 0.3851331, 0, 1, 0, -0.3851331, 0, 0.9228611, -1.8908128, -0.5663597, 4.949733)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="Cube7" type="MeshInstance3D" parent="Setting" unique_id=834821302]
+transform = Transform3D(0.92500424, 0, -0.3799567, 0, 1, 0, 0.3799567, 0, 0.92500424, -1.8908128, -0.5663597, 6.5870595)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="Cube5" type="MeshInstance3D" parent="Setting" unique_id=845438314]
+transform = Transform3D(0.0142763555, 0, 0.9998981, 0, 1, 0, -0.9998981, 0, 0.0142763555, -1.87695, -0.5288303, -6.664899)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
 
 [node name="Cube3" type="MeshInstance3D" parent="Setting" unique_id=1517154250]
-transform = Transform3D(0.7660445, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.7660445, -2.1, 5.9604645e-08, -0.5244003)
+transform = Transform3D(0.7660445, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.7660445, -2.1, -0.46509305, -0.5244003)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="Cube8" type="MeshInstance3D" parent="Setting" unique_id=321892395]
+transform = Transform3D(0.7660445, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.7660445, -2.1, -0.46509305, -2.0970585)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="BunnyMesh" type="MeshInstance3D" parent="Setting" unique_id=46344773]
+transform = Transform3D(0.12219532, 0, 0.5874252, 0, 0.6000001, 0, -0.5874252, 0, 0.12219532, -1.4725167, -0.117449015, -1.2408962)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = ExtResource("8_7a6vi")
+
+[node name="BunnyMesh2" type="MeshInstance3D" parent="Setting" unique_id=1641858560]
+transform = Transform3D(0.29856277, 0.017243214, 0.023727, -0.022306442, -0.024094839, 0.29819775, 0.019045286, -0.29853326, -0.022697285, -1.3718398, -0.12059431, 1.4524605)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = ExtResource("10_iscmt")
+
+[node name="BirdMesh" type="MeshInstance3D" parent="Setting" unique_id=1575762799]
+transform = Transform3D(-0.06213939, 0, 0.078349836, 0, 0.1, 0, -0.078349836, 0, -0.06213939, -1.2468452, -0.10915224, -5.975737)
+material_override = SubResource("StandardMaterial3D_1bvp3")
+mesh = ExtResource("10_kbqbn")

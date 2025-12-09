@@ -14,8 +14,8 @@ var _total_pitch = 0.0
 # Movement state
 var _direction = Vector3(0.0, 0.0, 0.0)
 var _velocity = Vector3(0.0, 0.0, 0.0)
-var _acceleration = 30
-var _deceleration = -10
+@export var _acceleration = 3
+@export var _deceleration = -1
 var _vel_multiplier = 4
 
 # Keyboard state

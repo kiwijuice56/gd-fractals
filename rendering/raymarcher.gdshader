@@ -51,9 +51,8 @@ group_uniforms brocolli;
 uniform vec3 brocolli_offset = vec3 (2.0, 4.8, 0.0);
 uniform float brocolli_runaway_threshold = 32.0;
 
-
 group_uniforms shape_modulus;
-uniform int versor_type : hint_enum("Noise", "Points") = 0;
+uniform int versor_type : hint_enum("Noise", "Sinusoid") = 0;
 uniform float color_frequency = 4.0;
 uniform float alpha = 3.15; // "cutoff" value of the fractal
 uniform float beta = -0.135; // "thickness" of fractal surface
@@ -63,9 +62,6 @@ uniform vec3 portal_center_1 = vec3(0.5, 0.6, 0.0); // Position of the portal
 uniform vec3 portal_offset_1 = vec3(0.45, 0.6, 0.2); // Position that the portal should teleport to
 uniform float portal_radius_1 = 0.3;
 uniform float portal_scale_1 = 4.0;
-uniform vec4 point1;
-uniform vec4 point2;
-uniform vec4 point3;
 
 group_uniforms mesh;
 uniform sampler3D sdf_texture: repeat_disable, filter_linear; // Signed distance function
@@ -76,13 +72,18 @@ uniform sampler3D sdf_texture: repeat_disable, filter_linear; // Signed distance
 // make details in the surface show and service when there are performance constraints
 group_uniforms lighting;
 uniform vec3 light_direction = vec3(0.0, -1.0, 0.0); // Should be synced in GDscript to some DirectionalLight3D
-uniform float smoothness = 24.0;
+uniform vec3 ambient_color: source_color = vec3(1.0);
+uniform float ambient_ratio: hint_range(0.0, 1.0) = 0.5;
 uniform float reflectivity = 0.25;
+uniform float smoothness = 24.0;
 uniform vec3 specular_color: source_color = vec3(1.0, 1.0, 1.0);
 uniform float specular_ratio : hint_range(0.0, 1.0) = 1.0;
+
 uniform bool real_shadows_enabled = true;
+
 uniform float fake_shadow_darkness : hint_range(0.0, 1.0) = 0.75;
 uniform float real_shadow_darkness : hint_range(0.0, 1.0) = 0.65;
+
 uniform vec3 shadow_absorption = vec3(1.2, 1.1, 1.0);
 uniform float shadow_softness : hint_range(0.0, 1.0) = 0.416;
 
@@ -98,18 +99,6 @@ void vertex() {
 		MODEL_MATRIX[3]);
 	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
 	VERTEX.xy *= PLANE_SCALE; // Multiplier to cover entire screen
-}
-
-vec4 quat_mul(vec4 q1, vec4 q2) {
-	vec3 v1 = q1.xyz;
-	vec3 v2 = q2.xyz;
-	float w1 = q1.w;
-	float w2 = q2.w;
-
-	return vec4(
-		w1 * v2 + w2 * v1 + cross(v1, v2),
-		w1 * w2 - dot(v1, v2)
-	);
 }
 
 // Combines distances of two shapes (OR)
@@ -291,10 +280,6 @@ float mesh_DE(vec3 p, inout vec3 collision_info) {
 	return texture(sdf_texture, p).r * 2.0 - 1.0;
 }
 
-float sphere_DE(vec3 p, float s){
-	return length(p) - s;
-}
-
 float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	// Center the fractal around the origin (mesh_DE is offset)
 	vec4 x = vec4(p + vec3(0.5), 0.0);
@@ -305,7 +290,7 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(x);
 		float dist_to_portal_1 = length(x.xyz - portal_center_1);
-		if (dist_to_portal_1 <= portal_radius_1) {
+		if (i < fractal_iterations - 2 && dist_to_portal_1 <= portal_radius_1) {
 			x.xyz = dist_to_portal_1 * normalize(x.xyz - portal_center_1) * portal_scale_1 + portal_offset_1;
 			dr *= portal_scale_1;
 		} else {
@@ -444,11 +429,13 @@ void fragment() {
 
 			// Albedo
 			float fractal_mix = 0.5 + 0.5 * sin(collision_info.r); // Kinda hacky
-			vec4 hit_color = fractal_color_1 * fractal_mix + fractal_color_2 * (1.0 - fractal_mix);
+			vec4 albedo = fractal_color_1 * fractal_mix + fractal_color_2 * (1.0 - fractal_mix);
 
+			vec4 hit_color = albedo;
+			
 			// Ambient occlusion
-			float aa = float(iter) / float(primary_max_iterations);
-			hit_color.rgb = clear_color.rgb * aa + (1.0 - aa) * hit_color.rgb;
+			float ao = float(iter) / float(primary_max_iterations);
+			hit_color.rgb += ambient_ratio * ambient_color * ao;
 
 			// Shadows based on normal only
 			vec3 corrected_light_direction =  normalize(inverse(MODEL_MATRIX) * vec4(light_direction, 0.0)).xyz;
@@ -475,4 +462,5 @@ void fragment() {
 		ALBEDO = clear_color.rgb;
 		ALPHA = clear_color.a;
 	}
+	
 }

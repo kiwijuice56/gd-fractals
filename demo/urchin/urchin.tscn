@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://dhoujoqo7r6gd"]
+[gd_scene format=3 uid="uid://dhoujoqo7r6gd"]
 
 [ext_resource type="Material" uid="uid://dp4myw4v55h3s" path="res://demo/urchin/urchin_material.tres" id="1_mm3sq"]
-[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/bird/bird.gd" id="2_nor6n"]
+[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/rotate.gd" id="2_nor6n"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(1, 1)

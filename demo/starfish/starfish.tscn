@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://ds1lo7wfm5lcq"]
+[gd_scene format=3 uid="uid://ds1lo7wfm5lcq"]
 
 [ext_resource type="Material" uid="uid://bpsw64tsrv1ky" path="res://demo/starfish/starfish_material.tres" id="1_ektvk"]
-[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/bird/bird.gd" id="2_exo8d"]
+[ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/rotate.gd" id="2_exo8d"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_n23bp"]
 size = Vector2(1, 1)

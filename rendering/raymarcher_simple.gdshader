@@ -33,7 +33,7 @@ uniform float animation_speed = 1.0;
 uniform float animation_intensity = 0.3; // Strength of the animations
 uniform vec3 secondary_fractal_offset = vec3(-1.2, 0.0, 0.0);
 uniform vec3 secondary_fractal_scale = vec3(0.333, 0.25, 0.333);
-uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge", "Brocolli") = 0;
+uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge", "Brocolli", "Circly", "Mechanical", "Ball") = 0;
 
 group_uniforms mandelbulb;
 uniform float mandelbulb_power = 8.0;
@@ -140,6 +140,45 @@ void box_fold(inout vec3 p) {
 	p = clamp(p, -0.5, 0.5) * 2.0 - p;
 }
 
+float circly_DE(vec3 p0, inout vec3 collision_info){
+	vec4 p = vec4(p0, 1.);
+	for(int i = 0; i < fractal_iterations; i++){
+		p.xyz = mod(p.xyz-1.,2.)-1.;
+		p *= 1.4 / dot(p.xyz,p.xyz) + 0.5 * animation_intensity * sin(TIME * animation_speed);;
+	}
+	return (length(p.xz/p.w) * 0.25);
+}
+
+float mechanical_DE(vec3 p, inout vec3 collision_info){
+	p = abs(p) - 1.2;
+	if(p.x < p.z) p.xz=p.zx;
+	if(p.y < p.z) p.yz=p.zy;
+	if(p.x < p.y) p.xy=p.yx;
+	float s = 1.;
+	for(int i = 0; i < fractal_iterations;i++){
+		p = abs(p);
+		float r = 2. / clamp(dot(p,p),.1,1.);
+		s *= r; p *= r;
+		p -=vec3(.6,.6,3.5) + 0.5 * animation_intensity * sin(TIME * animation_speed);;
+	}
+	float a = 1.5;
+	p -= clamp(p, -a, a);
+	return length(p) / s;
+}
+
+float ball_DE(vec3 p, inout vec3 collision_info){
+	p.xz=abs(.5-mod(p.xz,1.)) + .01 + 0.5 * animation_intensity * sin(TIME * animation_speed);
+	float DEfactor=1.;
+	for (int i=0; i<fractal_iterations; i++) {
+		p = abs(p)-vec3(0.,2.,0.);
+		float r2 = dot(p, p);
+		float sc=2./clamp(r2,0.4,1.);
+		p*=sc;
+		DEfactor*=sc;
+		p = p - vec3(0.5,1.,0.5);
+	}
+	return length(p)/DEfactor-.0005;
+}
 // http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/
 float mandelbox_DE(vec3 p, inout vec3 collision_info) {
 	float dz = 1.0;
@@ -325,6 +364,9 @@ float world_DE(vec3 p, inout vec3 collision_info) {
 		case 3: secondary_fractal_dist = tetrahedron_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
 		case 4: secondary_fractal_dist = mengersponge_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
 		case 5: secondary_fractal_dist = brocolli_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 6: secondary_fractal_dist = circly_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 7: secondary_fractal_dist = mechanical_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 8: secondary_fractal_dist = ball_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
 	}
 
 	return secondary_fractal_scale.x * secondary_fractal_dist;
@@ -441,7 +483,7 @@ void fragment() {
 			previous_reflectance = reflectivity;
 		}
 		ALBEDO.rgb = clamp(pixel_color.rgb, vec3(0.0), vec3(1.0));
-		ALPHA = pixel_color.a;
+		ALPHA = clamp(pixel_color.a, 0.0, 1.0);
 		vec4 clip_pos = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(final_ray_pos, 1.0);
 		DEPTH = clip_pos.z / clip_pos.w;
 	} else {
