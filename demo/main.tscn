@@ -61,16 +61,15 @@ environment = SubResource("Environment_0xm2m")
 
 [node name="FreeLookCamera" type="Camera3D" parent="." unique_id=1684843375]
 transform = Transform3D(-4.3545054e-08, -0.08715574, 0.9961947, -3.8096983e-09, 0.9961947, 0.08715574, -1, -4.440892e-16, -4.371139e-08, 1.6558222, 0.6141418, 0.15462565)
-visible = false
 fov = 96.5
 script = ExtResource("1_oe2cu")
 sensitivity = 0.2
 
 [node name="Bird" parent="." unique_id=1194318444 instance=ExtResource("2_pw243")]
-transform = Transform3D(0.16481063, 0, 0.76842916, 0, 0.91987693, 0, -0.7417578, 0, 0.17073677, -1.7832223, 0.33785695, -5.365575)
+transform = Transform3D(0.16481063, 0, 0.76842916, 0, 0.91987693, 0, -0.7417578, 0, 0.17073677, -1.7832223, 0.4661016, -5.365575)
 
 [node name="Bird2" parent="." unique_id=607117355 instance=ExtResource("3_cqq71")]
-transform = Transform3D(0.47208756, 0, 0.6398565, 0, 0.99999964, 0, -0.62905884, 0, 0.4801908, -1.7176542, 0.36694312, -6.6479735)
+transform = Transform3D(-0.7847126, 0, -0.05389691, 0, 0.9999995, 0, 0.052987315, 0, -0.79818213, -1.6467466, 0.38264227, -6.6479735)
 
 [node name="Bunny" parent="." unique_id=860613573 instance=ExtResource("3_w7hkg")]
 transform = Transform3D(0.85149336, 0.30119872, 0.42922997, -0.3085041, 0.9496663, -0.054397587, -0.4240097, -0.08610001, 0.90155554, -2.0447495, 0.6480892, -0.5645925)

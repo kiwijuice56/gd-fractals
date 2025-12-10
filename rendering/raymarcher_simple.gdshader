@@ -33,7 +33,7 @@ uniform float animation_speed = 1.0;
 uniform float animation_intensity = 0.3; // Strength of the animations
 uniform vec3 secondary_fractal_offset = vec3(-1.2, 0.0, 0.0);
 uniform vec3 secondary_fractal_scale = vec3(0.333, 0.25, 0.333);
-uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge", "Brocolli", "Circly", "Mechanical", "Ball") = 0;
+uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge", "Brocolli", "Circly", "Mechanical", "Ball", "Mesh") = 0;
 
 group_uniforms mandelbulb;
 uniform float mandelbulb_power = 8.0;
@@ -56,7 +56,7 @@ uniform vec3 brocolli_offset = vec3 (2.0, 4.8, 0.0);
 uniform float brocolli_runaway_threshold = 32.0;
 
 group_uniforms shape_modulus;
-uniform int versor_type : hint_enum("Noise", "Points") = 0;
+uniform int versor_type : hint_enum("Noise", "Sinusoid") = 0;
 uniform float color_frequency = 4.0;
 uniform float alpha = 3.15; // "cutoff" value of the fractal
 uniform float beta = -0.135; // "thickness" of fractal surface
@@ -66,9 +66,6 @@ uniform vec3 portal_center_1 = vec3(0.5, 0.6, 0.0); // Position of the portal
 uniform vec3 portal_offset_1 = vec3(0.45, 0.6, 0.2); // Position that the portal should teleport to
 uniform float portal_radius_1 = 0.3;
 uniform float portal_scale_1 = 4.0;
-uniform vec4 point1;
-uniform vec4 point2;
-uniform vec4 point3;
 
 group_uniforms mesh;
 uniform sampler3D sdf_texture: repeat_disable, filter_linear; // Signed distance function
@@ -103,18 +100,6 @@ void vertex() {
 	VERTEX.xy *= PLANE_SCALE; // Multiplier to cover entire screen
 }
 
-vec4 quat_mul(vec4 q1, vec4 q2) {
-	vec3 v1 = q1.xyz;
-	vec3 v2 = q2.xyz;
-	float w1 = q1.w;
-	float w2 = q2.w;
-
-	return vec4(
-		w1 * v2 + w2 * v1 + cross(v1, v2),
-		w1 * w2 - dot(v1, v2)
-	);
-}
-
 // Returns the time value that a ray intersects with a sphere
 float intersect_sphere(vec3 ray_pos, vec3 ray_dir, float radius) {
 	float b = dot(ray_pos, ray_dir);
@@ -140,45 +125,50 @@ void box_fold(inout vec3 p) {
 	p = clamp(p, -0.5, 0.5) * 2.0 - p;
 }
 
+// https://jbaker.graphics/writings/DEC.html
 float circly_DE(vec3 p0, inout vec3 collision_info){
 	vec4 p = vec4(p0, 1.);
 	for(int i = 0; i < fractal_iterations; i++){
-		p.xyz = mod(p.xyz-1.,2.)-1.;
-		p *= 1.4 / dot(p.xyz,p.xyz) + 0.5 * animation_intensity * sin(TIME * animation_speed);;
+		p.xyz = mod(p.xyz - 1.0, 2.0) - 1.0;
+		p *= 1.4 / dot(p.xyz,p.xyz) + 0.5 * animation_intensity * sin(TIME * animation_speed);
 	}
-	return (length(p.xz/p.w) * 0.25);
+	return (length(p.xz / p.w) * 0.25);
 }
 
+// https://jbaker.graphics/writings/DEC.html
 float mechanical_DE(vec3 p, inout vec3 collision_info){
 	p = abs(p) - 1.2;
-	if(p.x < p.z) p.xz=p.zx;
-	if(p.y < p.z) p.yz=p.zy;
-	if(p.x < p.y) p.xy=p.yx;
-	float s = 1.;
-	for(int i = 0; i < fractal_iterations;i++){
+	if(p.x < p.z) p.xz = p.zx;
+	if(p.y < p.z) p.yz = p.zy;
+	if(p.x < p.y) p.xy = p.yx;
+	float s = 1.0;
+	for(int i = 0; i < fractal_iterations; i++) {
 		p = abs(p);
-		float r = 2. / clamp(dot(p,p),.1,1.);
-		s *= r; p *= r;
-		p -=vec3(.6,.6,3.5) + 0.5 * animation_intensity * sin(TIME * animation_speed);;
+		float r = 2.0 / clamp(dot(p,p), 0.1, 1.0);
+		s *= r;
+		p *= r;
+		p -= vec3(0.6, 0.6, 3.5) + 0.5 * animation_intensity * sin(TIME * animation_speed);
 	}
 	float a = 1.5;
 	p -= clamp(p, -a, a);
 	return length(p) / s;
 }
 
+// https://jbaker.graphics/writings/DEC.html
 float ball_DE(vec3 p, inout vec3 collision_info){
-	p.xz=abs(.5-mod(p.xz,1.)) + .01 + 0.5 * animation_intensity * sin(TIME * animation_speed);
-	float DEfactor=1.;
-	for (int i=0; i<fractal_iterations; i++) {
-		p = abs(p)-vec3(0.,2.,0.);
+	p.xz = abs(0.5-mod(p.xz,1.)) + .01 + 0.5 * animation_intensity * sin(TIME * animation_speed);
+	float DEfactor = 1.0;
+	for (int i=0; i < fractal_iterations; i++) {
+		p = abs(p) - vec3(0.0, 2.0, 0.0);
 		float r2 = dot(p, p);
-		float sc=2./clamp(r2,0.4,1.);
-		p*=sc;
-		DEfactor*=sc;
-		p = p - vec3(0.5,1.,0.5);
+		float sc= 2.0 / clamp(r2, 0.4, 1.0);
+		p *= sc;
+		DEfactor *= sc;
+		p = p - vec3(0.5, 1.0, 0.5);
 	}
-	return length(p)/DEfactor-.0005;
+	return length(p) / DEfactor - .0005;
 }
+
 // http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/
 float mandelbox_DE(vec3 p, inout vec3 collision_info) {
 	float dz = 1.0;
@@ -329,7 +319,7 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 	for (int i = 0; i < fractal_iterations; i++) {
 		r = length(x);
 		float dist_to_portal_1 = length(x.xyz - portal_center_1);
-		if (dist_to_portal_1 <= portal_radius_1) {
+		if (i < fractal_iterations - 2 && dist_to_portal_1 <= portal_radius_1) {
 			x.xyz = dist_to_portal_1 * normalize(x.xyz - portal_center_1) * portal_scale_1 + portal_offset_1;
 			dr *= portal_scale_1;
 		} else {
@@ -338,11 +328,13 @@ float mesh_fractal_DE(vec3 p, inout vec3 collision_info) {
 			if (versor_type == 0) {
 				D = normalize(texture(noise, animation_intensity * sin(animation_speed * vec3(0.2, 0.3, 0.2) * TIME) + noise_frequency * x.xyz).rgb);
 			} else if (versor_type == 1) {
-				D = normalize(quat_mul(x - point1, quat_mul(x - point2, x - point3)).xyz);
+				D = normalize(
+					mix(x.xyz, abs(sin(animation_speed * TIME + 8.0 * x.xzy) + cos(16.0 * x.yxz)), 0.4)
+				);
 			}
-
 			vec3 _garbage;
-			float R = exp(alpha * (mesh_DE(x.xyz, _garbage) + animated_beta));
+			float mesh_distance = mesh_DE(x.xyz, _garbage);
+			float R = exp(alpha * (mesh_distance + animated_beta));
 			x.xyz = D * R;
 			dr *= alpha * R * DR_SCALAR;
 			dr = mix(dr, sqrt(dr), DR_MIX); // More resistant to noise, but hacky
@@ -367,6 +359,7 @@ float world_DE(vec3 p, inout vec3 collision_info) {
 		case 6: secondary_fractal_dist = circly_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
 		case 7: secondary_fractal_dist = mechanical_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
 		case 8: secondary_fractal_dist = ball_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
+		case 9: secondary_fractal_dist = mesh_fractal_DE((p - secondary_fractal_offset) / secondary_fractal_scale, collision_info); break;
 	}
 
 	return secondary_fractal_scale.x * secondary_fractal_dist;

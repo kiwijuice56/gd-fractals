@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://cft2l8k6gg1qq"]
+[gd_scene load_steps=4 format=3 uid="uid://cft2l8k6gg1qq"]
 
 [ext_resource type="Material" uid="uid://bve65ej30u128" path="res://demo/bunny/bunny_material.tres" id="1_kuu4l"]
 
