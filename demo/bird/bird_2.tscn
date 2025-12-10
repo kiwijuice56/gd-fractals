@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://bw440k8n0muww"]
+[gd_scene load_steps=5 format=3 uid="uid://bw440k8n0muww"]
 
 [ext_resource type="Material" uid="uid://bhn6gpo1t0pb5" path="res://demo/bird/bird_2_material.tres" id="1_kkhnq"]
 [ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/rotate.gd" id="2_wsspy"]
