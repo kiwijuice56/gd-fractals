@@ -21,21 +21,20 @@ uniform float runaway_threshold = 5.0; // Distance where a ray is considered far
 uniform float bounding_radius = 1.0; // Radius of the sphere bounding the entire scene (tighter = better performance)
 
 group_uniforms fractal;
+
 uniform int fractal_iterations = 8; // Max iterations of the fractal algoritms
 uniform vec4 fractal_color_1: source_color = vec4(0.6, 0.0, 0.5, 1.0);
 uniform vec4 fractal_color_2: source_color = vec4(0.0, 0.3, 0.2, 1.0);
 uniform float animation_speed = 1.0;
 uniform float animation_intensity = 0.3; // Strength of the animations
+uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge", "Brocolli", "Circly", "Mechanical", "Ball", "Mesh") = 0;
 uniform vec3 secondary_fractal_offset = vec3(-1.2, 0.0, 0.0);
 uniform vec3 secondary_fractal_scale = vec3(0.333, 0.25, 0.333);
 uniform float secondary_fractal_blend_smoothness = 0.1;
-uniform int secondary_fractal_option: hint_enum("Mandelbulb", "Mandelbox", "Julia", "Sierpinski", "Mengersponge", "Brocolli") = 0;
 
 group_uniforms mandelbulb;
 uniform float mandelbulb_power = 8.0;
 uniform float mandelbulb_runaway_threshold = 2.0;
-uniform vec3 color_center_point = vec3(0.0, 0.5, -0.5); // Color parameters for fractal algorithms
-uniform float color_balance: hint_range(0.0, 1.0) = 0.5; // Sliding scale for the two fractal colors (mandelbulb only)
 
 group_uniforms mandebox;
 uniform float mandelbox_scale = 3.0;
@@ -109,12 +108,6 @@ float smooth_union(float d1, float d2, float k) {
 	return min(d1, d2) - h * h / SMOOTH_UNION_MULTIPLIER / k;
 }
 
-// Combines distances of two shapes (AND)
-// https://iquilezles.org/articles/distfunctions/
-float smooth_intersection(float d1, float d2, float k) {
-	return -smooth_union(-d1, -d2, k);
-}
-
 // Returns the time value that a ray intersects with a sphere
 float intersect_sphere(vec3 ray_pos, vec3 ray_dir, float radius) {
 	float b = dot(ray_pos, ray_dir);
@@ -138,6 +131,50 @@ void sphere_fold(inout vec3 p, inout float dz) {
 
 void box_fold(inout vec3 p) {
 	p = clamp(p, -0.5, 0.5) * 2.0 - p;
+}
+
+// https://jbaker.graphics/writings/DEC.html
+float circly_DE(vec3 p0, inout vec3 collision_info){
+	vec4 p = vec4(p0, 1.);
+	for(int i = 0; i < fractal_iterations; i++){
+		p.xyz = mod(p.xyz - 1.0, 2.0) - 1.0;
+		p *= 1.4 / dot(p.xyz,p.xyz) + 0.5 * animation_intensity * sin(TIME * animation_speed);
+	}
+	return (length(p.xz / p.w) * 0.25);
+}
+
+// https://jbaker.graphics/writings/DEC.html
+float mechanical_DE(vec3 p, inout vec3 collision_info){
+	p = abs(p) - 1.2;
+	if(p.x < p.z) p.xz = p.zx;
+	if(p.y < p.z) p.yz = p.zy;
+	if(p.x < p.y) p.xy = p.yx;
+	float s = 1.0;
+	for(int i = 0; i < fractal_iterations; i++) {
+		p = abs(p);
+		float r = 2.0 / clamp(dot(p,p), 0.1, 1.0);
+		s *= r;
+		p *= r;
+		p -= vec3(0.6, 0.6, 3.5) + 0.5 * animation_intensity * sin(TIME * animation_speed);
+	}
+	float a = 1.5;
+	p -= clamp(p, -a, a);
+	return length(p) / s;
+}
+
+// https://jbaker.graphics/writings/DEC.html
+float ball_DE(vec3 p, inout vec3 collision_info){
+	p.xz = abs(0.5-mod(p.xz,1.)) + .01 + 0.5 * animation_intensity * sin(TIME * animation_speed);
+	float DEfactor = 1.0;
+	for (int i=0; i < fractal_iterations; i++) {
+		p = abs(p) - vec3(0.0, 2.0, 0.0);
+		float r2 = dot(p, p);
+		float sc= 2.0 / clamp(r2, 0.4, 1.0);
+		p *= sc;
+		DEfactor *= sc;
+		p = p - vec3(0.5, 1.0, 0.5);
+	}
+	return length(p) / DEfactor - .0005;
 }
 
 // http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/
@@ -205,9 +242,7 @@ float mandelbulb_DE(vec3 p, inout vec3 collision_info) {
 		theta = theta * animated_power;
 		phi = phi * animated_power;
 		x = p + pow(r, animated_power) * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
-		collision_info.r = min(collision_info.r, length(x - color_center_point));
 	}
-	collision_info.r *= color_balance;
 	return 0.5 * log(r) * r / dr;
 }
 
@@ -269,7 +304,6 @@ float brocolli_DE(vec3 z, inout vec3 collision_info) {
 		}
 
 		r = length (z);
-		collision_info.r = min(collision_info.r, length(z - color_center_point));
 	}
 
 	return (length(z) - 2.0) * pow(brocolli_scale, -float(n));
@@ -337,6 +371,10 @@ float world_DE(vec3 p, inout vec3 collision_info) {
 		case 3: secondary_fractal_dist = tetrahedron_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 		case 4: secondary_fractal_dist = mengersponge_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 		case 5: secondary_fractal_dist = brocolli_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 6: secondary_fractal_dist = circly_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 7: secondary_fractal_dist = mechanical_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 8: secondary_fractal_dist = ball_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
+		case 9: secondary_fractal_dist = mesh_fractal_DE((p - secondary_fractal_offset) / secondary_fractal_scale, garbage_); break;
 	}
 
 	return smooth_union(mesh_dist, secondary_fractal_scale.x * secondary_fractal_dist, secondary_fractal_blend_smoothness);

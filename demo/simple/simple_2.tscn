@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://b6h7lpodygvtq"]
+[gd_scene load_steps=9 format=3 uid="uid://b6h7lpodygvtq"]
 
 [ext_resource type="Shader" uid="uid://bpfx21satfbwt" path="res://rendering/raymarcher_simple.gdshader" id="1_yt6wk"]
 [ext_resource type="Script" uid="uid://d0ydowy82fskt" path="res://demo/rotate.gd" id="3_c63kg"]
@@ -63,9 +63,6 @@ shader_parameter/portal_center_1 = Vector3(0.5, 0.855, 0.5)
 shader_parameter/portal_offset_1 = Vector3(0.5, 0.47, 0.5)
 shader_parameter/portal_radius_1 = 0.205
 shader_parameter/portal_scale_1 = 2.96
-shader_parameter/point1 = Vector4(0, 0, 0, 0)
-shader_parameter/point2 = Vector4(0, 0, 0, 0)
-shader_parameter/point3 = Vector4(0, 0, 0, 0)
 shader_parameter/light_direction = Vector3(0, -1, 0.5)
 shader_parameter/smoothness = 4.64
 shader_parameter/reflectivity = 3.14
