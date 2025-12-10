@@ -69,11 +69,14 @@ sensitivity = 0.2
 transform = Transform3D(0.16481063, 0, 0.76842916, 0, 0.91987693, 0, -0.7417578, 0, 0.17073677, -1.7832223, 0.4661016, -5.365575)
 
 [node name="Bird2" parent="." unique_id=607117355 instance=ExtResource("3_cqq71")]
-transform = Transform3D(-0.7508005, 0, 0.23828627, 0, 0.9999995, 0, -0.2342652, 0, -0.7636879, -1.6467466, 0.5626701, -6.6479735)
+transform = Transform3D(0.3444333, 0, -0.7192062, 0, 0.9999995, 0, 0.70706946, 0, 0.35034552, -1.6467466, 0.4249456, -6.6479735)
 
 [node name="Bunny" parent="." unique_id=860613573 instance=ExtResource("3_w7hkg")]
 transform = Transform3D(0.85149336, 0.30119872, 0.42922997, -0.3085041, 0.9496663, -0.054397587, -0.4240097, -0.08610001, 0.90155554, -2.0447495, 0.6480892, -0.5645925)
 script = ExtResource("6_au1l0")
+
+[node name="Bunny2" parent="." unique_id=965001392 instance=ExtResource("13_fdg1k")]
+transform = Transform3D(0.9228141, 0, -0.38524586, 0, 1, 0, 0.38524586, 0, 0.9228141, -2.048697, 0.5276439, -2.1111186)
 
 [node name="Urchin" parent="." unique_id=1568187849 instance=ExtResource("5_wrxtx")]
 transform = Transform3D(0.36906004, -0.8127535, 0.27625164, 0.1279858, 0.46392736, 0.69663906, -0.6826393, -0.35242423, 0.27996242, -1.8622528, 0.31504798, 2.0802145)
@@ -83,9 +86,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8470454, 0.5308281, 4.9911
 
 [node name="Simple2" parent="." unique_id=2020250368 instance=ExtResource("9_nr2wj")]
 transform = Transform3D(0.49620137, 0, -0.86820745, 0, 1, 0, 0.86820745, 0, 0.49620137, -1.9550899, 0.381725, 6.5192847)
-
-[node name="Bunny2" parent="." unique_id=965001392 instance=ExtResource("13_fdg1k")]
-transform = Transform3D(0.9228141, 0, -0.38524586, 0, 1, 0, 0.38524586, 0, 0.9228141, -2.048697, 0.5276439, -2.1111186)
 
 [node name="Simple3" parent="." unique_id=99924883 instance=ExtResource("14_6g5ly")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.155, 1.5, 8)
@@ -143,7 +143,7 @@ transform = Transform3D(0.12219532, 0, 0.5874252, 0, 0.6000001, 0, -0.5874252, 0
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = ExtResource("8_7a6vi")
 
-[node name="BunnyMesh2" type="MeshInstance3D" parent="Setting" unique_id=1641858560]
+[node name="UrchinMesh" type="MeshInstance3D" parent="Setting" unique_id=1641858560]
 transform = Transform3D(0.29856277, 0.017243214, 0.023727, -0.022306442, -0.024094839, 0.29819775, 0.019045286, -0.29853326, -0.022697285, -1.3718398, -0.12059431, 1.4524605)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = ExtResource("10_iscmt")
